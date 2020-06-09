@@ -1,0 +1,12 @@
+[package]
+name = "structmap"
+version = "0.1.0"
+authors = ["ex0dus-0x <ex0dus@codemuch.tech>"]
+edition = "2018"
+
+[dependencies]
+quote = "1.0"
+syn = { version = "1.0", features = ["full"] }
+
+[lib]
+proc-macro = true
