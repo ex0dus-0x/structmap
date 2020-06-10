@@ -16,8 +16,8 @@ trait FromHashMap {
     fn from_hashmap(structure: ParseStream, hashmap: HashMap<String, String>) -> Self;
 }
 
-trait ToHashMap<T> {
-    fn to_hashmap(structure: ParseStream) -> HashMap<String, T>;
+trait ToHashMap {
+    fn to_hashmap(structure: ParseStream, expression: ParseStream) -> HashMap<String, String>;
 }
 
 struct ItemStruct {
@@ -56,6 +56,8 @@ pub fn from_hashmap(input: TokenStream) -> TokenStream {
 	// get the name identifier of the struct input AST
 	let name: &Ident = &ast.ident;
 
+    todo!()
+    /*
 	// start codegen of the impl for the given struct using quasi-quoting
     let tokens = quote! {
         impl FromHashMap<#name> for #name where {
@@ -66,11 +68,12 @@ pub fn from_hashmap(input: TokenStream) -> TokenStream {
         }
     };
     TokenStream::from(tokens)
+    */
 }
 
 
-#[proc_macro_attribute]
-pub fn to_hashmap(structure: TokenStream, hashmap: TokenStream) -> TokenStream {
+#[proc_macro_derive(ToHashMap)]
+pub fn to_hashmap(hashmap: TokenStream) -> TokenStream {
 	// turn source into a parsable string for AST conversion
     let source: String = hashmap.to_string();
     println!("{:?}", source);
