@@ -1,10 +1,14 @@
 //! Defines a set of unit tests in order to test the conversion functionality between struct types
 //! and associative containers.
 
-use structmap::{FromHashMap, ToHashMap};
+use structmap::FromHashMap;
 
 use std::collections::HashMap;
 
+/*
+#[structmap::to_hashmap]
+type DeriveHashMap = HashMap<String, String>;
+*/
 
 #[derive(FromHashMap)]
 struct TestStruct {
@@ -25,7 +29,7 @@ fn test_hashmap_to_struct() {
 /*
 #[test]
 fn test_struct_to_hashmap() {
-    let mut hm: HashMap<String, String> = TestStruct::to_hashmap(TestStruct {
+    let mut hm: DeriveHashMap = TestStruct::to_hashmap(TestStruct {
         name: String::from("example"),
         value: String::from("some_value"),
     });
