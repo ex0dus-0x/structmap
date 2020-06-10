@@ -12,12 +12,12 @@ use proc_macro::TokenStream;
 use std::collections::HashMap;
 
 
-trait FromHashMap<T, U> {
-    fn from_hashmap(hashmap: HashMap<String, T>) -> Self;
+trait FromHashMap {
+    fn from_hashmap(structure: ParseStream, hashmap: HashMap<String, String>) -> Self;
 }
 
 trait ToHashMap<T> {
-    fn to_hashmap(structure: ParseStream) -> HashMap<String, String>;
+    fn to_hashmap(structure: ParseStream) -> HashMap<String, T>;
 }
 
 struct ItemStruct {
@@ -49,18 +49,31 @@ pub fn from_hashmap(input: TokenStream) -> TokenStream {
 		.filter_map(|field| field.ident.as_ref())
 		.collect::<Vec<&Ident>>();
 
+    for item in idents {
+        println!("{:?}", item);
+    }
+
 	// get the name identifier of the struct input AST
 	let name: &Ident = &ast.ident;
 
-	// start codegen of the impl for the given struct
-	todo!()
+	// start codegen of the impl for the given struct using quasi-quoting
+    let tokens = quote! {
+        impl FromHashMap<#name> for #name where {
+            fn from_hashmap(mut hashmap: ::std::collections::HashMap<String, #name>) -> #name {
+                let mut settings = #name::default();
+                settings
+            }
+        }
+    };
+    TokenStream::from(tokens)
 }
 
 
-#[proc_macro_derive(ToHashMap)]
-pub fn to_hashmap(input: TokenStream) -> TokenStream {
+#[proc_macro_attribute]
+pub fn to_hashmap(structure: TokenStream, hashmap: TokenStream) -> TokenStream {
 	// turn source into a parsable string for AST conversion
-    let source: String = input.to_string();
+    let source: String = hashmap.to_string();
+    println!("{:?}", source);
     let ast: Expr = syn::parse_str::<Expr>(&source).unwrap();
 
     // given a struct, parse out fields intriniscally and functionally
