@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 quote = "1.0"
-syn = { version = "1.0", features = ["full"] }
+syn = { version = "1.0", features = ["full", "printing"] }
 
 [lib]
 proc-macro = true
