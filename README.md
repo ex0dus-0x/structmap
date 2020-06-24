@@ -12,11 +12,23 @@ This was largely inspired by previous work done by @ameo, linked in his blog [he
 
 ## Usage
 
+In your `Cargo.toml` file, include the crate as so:
+
+```
+[dependencies]
+structmap = "0.1.0"
+```
+
 ### Struct to Map
 
-```rust
-struct
+Let's demonstrate the conversion from a `struct` to a HashMap
 
+```rust
+use structmap::ToHashMap;
 ```
 
 ### Map to Struct
+
+```rust
+use structmap::FromHashMap;
+```
