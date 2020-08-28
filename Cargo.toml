@@ -8,5 +8,9 @@ edition = "2018"
 quote = "1.0"
 syn = { version = "1.0", features = ["full", "printing"] }
 
+[[test]]
+name = "tests"
+path = "tests/test.rs"
+
 [lib]
 proc-macro = true
