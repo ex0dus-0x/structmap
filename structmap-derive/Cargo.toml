@@ -1,0 +1,12 @@
+[package]
+name = "structmap-derive"
+version = "0.1.0"
+authors = ["ex0dus-0x <ex0dus@codemuch.tech>"]
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+quote = "1.0"
+syn = { version = "1.0", features = ["full", "printing"] }
