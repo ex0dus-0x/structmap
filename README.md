@@ -71,3 +71,12 @@ fn main() {
 ### Map to Struct
 
 TODO
+
+## Contributions
+
+This is still a WIP crate, and will mostly be used for personal projects, but feel free to let me
+know if there are any outstanding features that should be implemented!
+
+## License
+
+[MIT License](https://codemuch.tech/license.txt)
