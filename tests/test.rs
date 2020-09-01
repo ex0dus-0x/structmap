@@ -3,10 +3,11 @@
 
 use std::collections::HashMap;
 
-// TODO: figure out why I can't reimport from `structmap`
+use structmap::{FromHashMap, ToHashMap};
+use structmap_derive::{FromHashMap, ToHashMap};
 
 
-#[derive(FromHashMap, Debug)]
+#[derive(FromHashMap, ToHashMap)]
 struct TestStruct {
     name: String,
     value: String,
@@ -33,11 +34,15 @@ fn test_hashmap_to_struct() {
     assert!(test.value == "some_value");
 }
 
-
 #[test]
 fn test_struct_to_hashmap() {
-    let mut hm: HashMap<String, String> = TestStruct::to_hashmap(TestStruct {
+    let test_struct = TestStruct {
         name: String::from("example"),
         value: String::from("some_value"),
-    });
+    };
+
+    // convert struct to hashmap, and check attributes
+    let hm: HashMap<String, String> = TestStruct::to_hashmap(test_struct);
+    assert!(hm.get("name").unwrap() == "example");
+    assert!(hm.get("value").unwrap() == "some_value");
 }
