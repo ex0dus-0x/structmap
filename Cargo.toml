@@ -1,10 +1,18 @@
 [package]
 name = "structmap"
-version = "0.1.0"
+description = "Procedural macro library for converting between Rust structs and associative containers"
+
 authors = ["ex0dus-0x <ex0dus@codemuch.tech>"]
+license = "MIT"
+
+homepage = "https://github.com/ex0dus-0x/structmap"
+documentation = "https://docs.rs/structmap"
+repository = "https://github.com/ex0dus-0x/structmap"
+
+version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-structmap-derive = { path = "structmap-derive", version = "0.1.0" }
+structmap-derive = "0.1.0"
 
 [workspace]
