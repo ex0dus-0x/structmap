@@ -6,10 +6,12 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data, DeriveInput, Expr, Ident, Member};
+use syn::{Data, DeriveInput, Ident};
 
 
-/// Converts a given `HashMap` into an input struct type
+/// Implements the functionality for converting entries in a HashMap into attributes and values of a
+/// struct. It will consume a tokenized version of the initial struct declaration, and use code
+/// generation to implement the `FromHashMap` trait for instantiating the contents of the struct.
 #[proc_macro_derive(FromHashMap)]
 pub fn from_hashmap(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input as DeriveInput);
@@ -56,7 +58,7 @@ pub fn from_hashmap(input: TokenStream) -> TokenStream {
             let res = v.parse::<T>();
             match res {
                 Ok(val) => val,
-                Err(_) => panic!(format!("Unable to convert inpu to type")),
+                Err(_) => panic!(format!("Unable to convert input to type")),
             }
         }
     };
@@ -64,28 +66,44 @@ pub fn from_hashmap(input: TokenStream) -> TokenStream {
 }
 
 
+/// Converts a given input struct into a HashMap where the keys are the attribute names assigned to
+/// the values of the entries.
 #[proc_macro_derive(ToHashMap)]
-pub fn to_hashmap(hashmap: TokenStream) -> TokenStream {
-    // turn source into a parsable string for AST conversion
-    let source: String = hashmap.to_string();
-    let ast: Expr = syn::parse_str::<Expr>(&source).unwrap();
+pub fn to_hashmap(input_struct: TokenStream) -> TokenStream {
+    let ast = syn::parse_macro_input!(input_struct as DeriveInput);
 
-    // given a struct, parse out fields intriniscally
-    let _fields: Vec<Ident> = match ast {
-        Expr::Struct(st) => st
-            .fields
-            .iter()
-            .filter_map(|field| match &field.member {
-                Member::Named(v) => Some(v.clone()),
-                _ => None,
-            })
-            .collect::<Vec<Ident>>(),
-        Expr::Tuple(_) => {
-            panic!("tuple are not (yet) supported");
-        }
-        _ => {
-            panic!("does not support non-product abstract data types");
+    // parse out all the field names in the struct as `Ident`s
+    let fields = match ast.data {
+        Data::Struct(st) => st.fields,
+        _ => unimplemented!(),
+    };
+    let idents: Vec<&Ident> = fields
+        .iter()
+        .filter_map(|field| field.ident.as_ref())
+        .collect::<Vec<&Ident>>();
+
+    // convert all the field names into strings
+    let keys: Vec<String> = idents
+        .clone()
+        .iter()
+        .map(|ident| ident.to_string())
+        .collect::<Vec<String>>();
+
+    // get the name identifier of the struct input AST
+    let name: &Ident = &ast.ident;
+    let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
+
+    // start codegen for to_hashmap functionality that converts a struct into a hashmap
+    let tokens = quote! {
+        impl #impl_generics ToHashMap for #name #ty_generics #where_clause {
+            fn to_hashmap(mut input_struct: #name) -> ::std::collections::HashMap<String, String> {
+                let mut hm: ::std::collections::HashMap<String, String> = ::std::collections::HashMap::new();
+                #(
+                    hm.insert(#keys.to_string(), input_struct.#idents);
+                )*
+                hm
+            }
         }
     };
-    todo!()
+    TokenStream::from(tokens)
 }
