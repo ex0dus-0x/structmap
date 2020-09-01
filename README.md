@@ -1,6 +1,6 @@
 # structmap
 
-Procedural macro library for converting between `struct` types and Rust associative containers.
+Procedural macro library for converting between Rust `struct` types and associative containers.
 
 ## Introduction
 
@@ -19,8 +19,7 @@ let somedata_hm: HashMap<String, String> = HashMap::new();
 
 Using metaprogramming and code generation capabilities  supported by Rust's support for _procedural macros_, I decided to implement this crate to simply provide conversion support between structs (abstractly known as _product types_), and associative containers, including `HashMap`s and `BTreeMap`s (TODO).
 
-This was largely inspired by previous work done by @ameo, linked in his blog [here](https://cprimozic.net/blog/writing-a-hashmap-to-struct-procedural-macro-in-rust/).
-This crate contains code that is supported for Rust 2018, and includes updated dependencies for AST parsing and code generation. It includes one subcrate, `structmap-derive`, which implements the actual procedural macro.
+This was largely inspired by previous work done by @ameo, linked in his blog [here](https://cprimozic.net/blog/writing-a-hashmap-to-struct-procedural-macro-in-rust/), but extends on it to support conversion both ways. This crate contains code that is supported for Rust 2018, and includes updated dependencies for AST parsing and code generation. It includes one subcrate, `structmap-derive`, which implements the actual procedural macro.
 
 ## Usage
 
