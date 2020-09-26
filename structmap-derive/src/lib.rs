@@ -8,6 +8,50 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{Data, DeriveInput, Ident};
 
+use std::fmt;
+use std::any::Any;
+
+/// Represents primitive types that are supported for conversion into a HashMap that can support
+/// heterogeneous values. Inspired by `serde_json::Value`s.
+#[derive(Debug, Clone)]
+enum Value<'a> {
+    Null,
+    Bool(bool),
+    Int(i32),
+    UInt(u32),
+    String(&'a str),
+}
+
+impl<'a> fmt::Display for Value<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self)
+    }
+}
+
+impl<'a> Value<'a> {
+    pub fn to_value<T: Any>(value: T) -> Value<'a> {
+        let any_val = &value as &dyn Any;
+        if let Some(val) = any_val.downcast_ref::<bool>() {
+            Value::Bool(*val)
+        }
+        else if let Some(val) = any_val.downcast_ref::<i32>() {
+            Value::Int(*val)
+        }
+        else if let Some(val) = any_val.downcast_ref::<u32>() {
+            Value::UInt(*val)
+        }
+        else if let Some(val) = any_val.downcast_ref::<&'static str>() {
+            Value::String(val)
+        } else {
+            Value::Null
+        }
+    }
+
+    pub fn from_value<T: Any>(value: Value<'a>) -> T {
+        todo!()
+    }
+}
+
 
 /// Implements the functionality for converting entries in a HashMap into attributes and values of a
 /// struct. It will consume a tokenized version of the initial struct declaration, and use code
@@ -106,4 +150,10 @@ pub fn to_hashmap(input_struct: TokenStream) -> TokenStream {
         }
     };
     TokenStream::from(tokens)
+}
+
+#[proc_macro_attribute]
+pub fn rename(attr: TokenStream, item: TokenStream) -> TokenStream {
+    // TODO: parse out the attribute name and internally rewrite it for HashMap
+    todo!()
 }
