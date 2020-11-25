@@ -6,11 +6,13 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data, DeriveInput, Ident};
+use syn::{Data, DeriveInput, Ident, Fields};
 
-use std::fmt;
-use std::any::Any;
+//use std::fmt;
+//use std::any::Any;
+use std::collections::HashMap;
 
+/*
 /// Represents primitive types that are supported for conversion into a HashMap that can support
 /// heterogeneous values. Inspired by `serde_json::Value`s.
 #[derive(Debug, Clone)]
@@ -51,6 +53,7 @@ impl<'a> Value<'a> {
         todo!()
     }
 }
+*/
 
 
 /// Implements the functionality for converting entries in a HashMap into attributes and values of a
@@ -110,17 +113,73 @@ pub fn from_hashmap(input: TokenStream) -> TokenStream {
 }
 
 
+/// Helper method used to parse out any `rename` attribute definitions in a struct
+/// marked with the ToHashMap trait, returning a mapping between the original field name
+/// and the one being changed for later use when doing codegen.
+fn parse_rename_attrs(fields: &Fields) -> HashMap<String, String> {
+    let mut rename: HashMap<String, String> = HashMap::new();
+    match fields {
+        Fields::Named(_) => {
+
+            // iterate over fields available and attributes
+            for field in fields.iter() {
+                for attr in field.attrs.iter() {
+
+                    // parse original struct field name
+                    let field_name = field.ident.as_ref().unwrap().to_string();
+                    if rename.contains_key(&field_name) {
+                        panic!("Cannot redefine field name multiple times");
+                    }
+
+                    // parse out name value pairs in attributes
+                    match attr.parse_meta() {
+                        Ok(syn::Meta::NameValue(nm)) => {
+
+                            // check path to be = `name`
+                            let path = nm.path.get_ident().unwrap().to_string();
+                            if path != "name" {
+                                panic!("Must define `name` parameter as part of attribute");
+                            }
+
+                            let lit = match nm.lit {
+                                syn::Lit::Str(val) => val.value(),
+                                _ => {
+                                    panic!("Renamed parameter must be string type");
+                                }
+                            };
+                            rename.insert(field_name, lit);
+                        },
+                        _ => {
+                            //panic!("Must define `name` parameter as part of attribute");
+                        },
+                    }
+                }
+            }
+        },
+        _ => {
+            panic!("Must have named fields");
+        }
+    }
+    rename
+}
+
+
 /// Converts a given input struct into a HashMap where the keys are the attribute names assigned to
 /// the values of the entries.
-#[proc_macro_derive(ToHashMap)]
+#[proc_macro_derive(ToHashMap, attributes(rename))]
 pub fn to_hashmap(input_struct: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input_struct as DeriveInput);
 
-    // parse out all the field names in the struct as `Ident`s
+    // check for struct type and parse out fields
     let fields = match ast.data {
         Data::Struct(st) => st.fields,
         _ => unimplemented!(),
     };
+
+    // before unrolling out more, get mapping of any renaming needed to be done
+    let rename_map = parse_rename_attrs(&fields);
+
+    // parse out all the field names in the struct as `Ident`s
     let idents: Vec<&Ident> = fields
         .iter()
         .filter_map(|field| field.ident.as_ref())
@@ -131,6 +190,12 @@ pub fn to_hashmap(input_struct: TokenStream) -> TokenStream {
         .clone()
         .iter()
         .map(|ident| ident.to_string())
+        .map(|name| {
+            match rename_map.contains_key(&name) {
+                true => rename_map.get(&name).unwrap().clone(),
+                false => name,
+            }
+        })
         .collect::<Vec<String>>();
 
     // get the name identifier of the struct input AST
@@ -150,10 +215,4 @@ pub fn to_hashmap(input_struct: TokenStream) -> TokenStream {
         }
     };
     TokenStream::from(tokens)
-}
-
-#[proc_macro_attribute]
-pub fn rename(attr: TokenStream, item: TokenStream) -> TokenStream {
-    // TODO: parse out the attribute name and internally rewrite it for HashMap
-    todo!()
 }

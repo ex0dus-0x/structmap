@@ -13,6 +13,7 @@ struct TestStruct {
     value: String,
 }
 
+
 impl Default for TestStruct {
     fn default() -> Self {
         Self {
@@ -21,6 +22,26 @@ impl Default for TestStruct {
         }
     }
 }
+
+
+#[derive(ToHashMap)]
+struct TestStructRename {
+    #[rename(name = "Full Name")]
+    name: String,
+
+    #[rename(name = "Age")]
+    value: String,
+}
+
+impl Default for TestStructRename {
+    fn default() -> Self {
+        Self {
+            name: String::new(),
+            value: String::new(),
+        }
+    }
+}
+
 
 #[test]
 fn test_hashmap_to_struct() {
