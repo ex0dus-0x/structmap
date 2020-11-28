@@ -132,25 +132,41 @@ fn parse_rename_attrs(fields: &Fields) -> HashMap<String, String> {
                     }
 
                     // parse out name value pairs in attributes
+                    // first get `lst` in #[rename(lst)]
                     match attr.parse_meta() {
-                        Ok(syn::Meta::NameValue(nm)) => {
+                        Ok(syn::Meta::List(lst)) => {
 
-                            // check path to be = `name`
-                            let path = nm.path.get_ident().unwrap().to_string();
-                            if path != "name" {
-                                panic!("Must define `name` parameter as part of attribute");
-                            }
+                            // then parse key-value name
+                            match lst.nested.first() {
+                                Some(syn::NestedMeta::Meta(meta)) => {
+                                    match meta {
+                                        syn::Meta::NameValue(nm) => {
+                                            // check path to be = `name`
+                                            let path = nm.path.get_ident().unwrap().to_string();
+                                            if path != "name" {
+                                                panic!("Must be `#[rename(name = 'VALUE')]`");
+                                            }
 
-                            let lit = match nm.lit {
-                                syn::Lit::Str(val) => val.value(),
-                                _ => {
-                                    panic!("Renamed parameter must be string type");
+                                            let lit = match &nm.lit {
+                                                syn::Lit::Str(val) => val.value(),
+                                                _ => {
+                                                    panic!("Must be `#[rename(name = 'VALUE')]`");
+                                                }
+                                            };
+                                            rename.insert(field_name, lit);
+                                        },
+                                        _ => {
+                                            panic!("Must be `#[rename(name = 'VALUE')]`");
+                                        }
+                                    }
                                 }
-                            };
-                            rename.insert(field_name, lit);
+                                _ => {
+                                    panic!("Must be `#[rename(name = 'VALUE')]`");
+                                }
+                            }
                         },
                         _ => {
-                            //panic!("Must define `name` parameter as part of attribute");
+                            panic!("Must be `#[rename(name = 'VALUE')]`");
                         },
                     }
                 }

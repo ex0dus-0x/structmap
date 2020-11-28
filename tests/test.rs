@@ -67,3 +67,14 @@ fn test_struct_to_hashmap() {
     assert!(hm.get("name").unwrap() == "example");
     assert!(hm.get("value").unwrap() == "some_value");
 }
+
+#[test]
+fn test_hm_to_struct_rename() {
+    let test_struct = TestStructRename {
+        name: String::from("example"),
+        value: String::from("some_value"),
+    };
+
+    let hm: HashMap<String, String> = TestStructRename::to_hashmap(test_struct);
+    assert!(hm.get("Full Name").unwrap() == "example");
+}
