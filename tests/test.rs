@@ -13,6 +13,7 @@ struct TestStruct {
     value: String,
 }
 
+
 impl Default for TestStruct {
     fn default() -> Self {
         Self {
@@ -21,6 +22,26 @@ impl Default for TestStruct {
         }
     }
 }
+
+
+#[derive(ToHashMap)]
+struct TestStructRename {
+    #[rename(name = "Full Name")]
+    name: String,
+
+    #[rename(name = "Age")]
+    value: String,
+}
+
+impl Default for TestStructRename {
+    fn default() -> Self {
+        Self {
+            name: String::new(),
+            value: String::new(),
+        }
+    }
+}
+
 
 #[test]
 fn test_hashmap_to_struct() {
@@ -45,4 +66,15 @@ fn test_struct_to_hashmap() {
     let hm: HashMap<String, String> = TestStruct::to_hashmap(test_struct);
     assert!(hm.get("name").unwrap() == "example");
     assert!(hm.get("value").unwrap() == "some_value");
+}
+
+#[test]
+fn test_hm_to_struct_rename() {
+    let test_struct = TestStructRename {
+        name: String::from("example"),
+        value: String::from("some_value"),
+    };
+
+    let hm: HashMap<String, String> = TestStructRename::to_hashmap(test_struct);
+    assert!(hm.get("Full Name").unwrap() == "example");
 }

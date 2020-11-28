@@ -6,7 +6,54 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data, DeriveInput, Ident};
+use syn::{Data, DeriveInput, Ident, Fields};
+
+//use std::fmt;
+//use std::any::Any;
+use std::collections::HashMap;
+
+/*
+/// Represents primitive types that are supported for conversion into a HashMap that can support
+/// heterogeneous values. Inspired by `serde_json::Value`s.
+#[derive(Debug, Clone)]
+enum Value<'a> {
+    Null,
+    Bool(bool),
+    Int(i32),
+    UInt(u32),
+    String(&'a str),
+}
+
+impl<'a> fmt::Display for Value<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self)
+    }
+}
+
+impl<'a> Value<'a> {
+    pub fn to_value<T: Any>(value: T) -> Value<'a> {
+        let any_val = &value as &dyn Any;
+        if let Some(val) = any_val.downcast_ref::<bool>() {
+            Value::Bool(*val)
+        }
+        else if let Some(val) = any_val.downcast_ref::<i32>() {
+            Value::Int(*val)
+        }
+        else if let Some(val) = any_val.downcast_ref::<u32>() {
+            Value::UInt(*val)
+        }
+        else if let Some(val) = any_val.downcast_ref::<&'static str>() {
+            Value::String(val)
+        } else {
+            Value::Null
+        }
+    }
+
+    pub fn from_value<T: Any>(value: Value<'a>) -> T {
+        todo!()
+    }
+}
+*/
 
 
 /// Implements the functionality for converting entries in a HashMap into attributes and values of a
@@ -66,17 +113,89 @@ pub fn from_hashmap(input: TokenStream) -> TokenStream {
 }
 
 
+/// Helper method used to parse out any `rename` attribute definitions in a struct
+/// marked with the ToHashMap trait, returning a mapping between the original field name
+/// and the one being changed for later use when doing codegen.
+fn parse_rename_attrs(fields: &Fields) -> HashMap<String, String> {
+    let mut rename: HashMap<String, String> = HashMap::new();
+    match fields {
+        Fields::Named(_) => {
+
+            // iterate over fields available and attributes
+            for field in fields.iter() {
+                for attr in field.attrs.iter() {
+
+                    // parse original struct field name
+                    let field_name = field.ident.as_ref().unwrap().to_string();
+                    if rename.contains_key(&field_name) {
+                        panic!("Cannot redefine field name multiple times");
+                    }
+
+                    // parse out name value pairs in attributes
+                    // first get `lst` in #[rename(lst)]
+                    match attr.parse_meta() {
+                        Ok(syn::Meta::List(lst)) => {
+
+                            // then parse key-value name
+                            match lst.nested.first() {
+                                Some(syn::NestedMeta::Meta(meta)) => {
+                                    match meta {
+                                        syn::Meta::NameValue(nm) => {
+                                            // check path to be = `name`
+                                            let path = nm.path.get_ident().unwrap().to_string();
+                                            if path != "name" {
+                                                panic!("Must be `#[rename(name = 'VALUE')]`");
+                                            }
+
+                                            let lit = match &nm.lit {
+                                                syn::Lit::Str(val) => val.value(),
+                                                _ => {
+                                                    panic!("Must be `#[rename(name = 'VALUE')]`");
+                                                }
+                                            };
+                                            rename.insert(field_name, lit);
+                                        },
+                                        _ => {
+                                            panic!("Must be `#[rename(name = 'VALUE')]`");
+                                        }
+                                    }
+                                }
+                                _ => {
+                                    panic!("Must be `#[rename(name = 'VALUE')]`");
+                                }
+                            }
+                        },
+                        _ => {
+                            panic!("Must be `#[rename(name = 'VALUE')]`");
+                        },
+                    }
+                }
+            }
+        },
+        _ => {
+            panic!("Must have named fields");
+        }
+    }
+    rename
+}
+
+
 /// Converts a given input struct into a HashMap where the keys are the attribute names assigned to
 /// the values of the entries.
-#[proc_macro_derive(ToHashMap)]
+#[proc_macro_derive(ToHashMap, attributes(rename))]
 pub fn to_hashmap(input_struct: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input_struct as DeriveInput);
 
-    // parse out all the field names in the struct as `Ident`s
+    // check for struct type and parse out fields
     let fields = match ast.data {
         Data::Struct(st) => st.fields,
         _ => unimplemented!(),
     };
+
+    // before unrolling out more, get mapping of any renaming needed to be done
+    let rename_map = parse_rename_attrs(&fields);
+
+    // parse out all the field names in the struct as `Ident`s
     let idents: Vec<&Ident> = fields
         .iter()
         .filter_map(|field| field.ident.as_ref())
@@ -87,6 +206,12 @@ pub fn to_hashmap(input_struct: TokenStream) -> TokenStream {
         .clone()
         .iter()
         .map(|ident| ident.to_string())
+        .map(|name| {
+            match rename_map.contains_key(&name) {
+                true => rename_map.get(&name).unwrap().clone(),
+                false => name,
+            }
+        })
         .collect::<Vec<String>>();
 
     // get the name identifier of the struct input AST
