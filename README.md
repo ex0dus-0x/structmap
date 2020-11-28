@@ -1,5 +1,18 @@
 # structmap
 
+[![Actions][actions-badge]][actions-url]
+[![crates.io version][crates-structmap-badge]][crates-structmap]
+[![Docs][docs-badge]][docs.rs]
+
+[actions-badge]: https://github.com/ex0dus-0x/structmap/workflows/CI/badge.svg?branch=master
+[actions-url]: https://github.com/ex0dus-0x/structmap/actions
+
+[crates-structmap-badge]: https://img.shields.io/crates/v/structmap.svg
+[crates-structmap]: https://crates.io/crates/structmap
+
+[docs-badge]: https://docs.rs/structmap/badge.svg
+[docs.rs]: https://docs.rs/structmap
+
 Procedural macro library for converting between Rust `struct` types and associative containers.
 
 ## Introduction
