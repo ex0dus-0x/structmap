@@ -6,13 +6,11 @@ use std::collections::HashMap;
 use structmap::{FromHashMap, ToHashMap};
 use structmap_derive::{FromHashMap, ToHashMap};
 
-
 #[derive(FromHashMap, ToHashMap)]
 struct TestStruct {
     name: String,
     value: String,
 }
-
 
 impl Default for TestStruct {
     fn default() -> Self {
@@ -22,7 +20,6 @@ impl Default for TestStruct {
         }
     }
 }
-
 
 #[derive(ToHashMap)]
 struct TestStructRename {
@@ -41,7 +38,6 @@ impl Default for TestStructRename {
         }
     }
 }
-
 
 #[test]
 fn test_hashmap_to_struct() {

@@ -1,7 +1,7 @@
 //! Implements the public traits that developers inherit from in order to properly utilize the
 //! derive macro's functionality in code conversion and generation.
 
-use std::collections::{HashMap, BTreeMap};
+use std::collections::{BTreeMap, HashMap};
 //use std::fmt;
 //use std::any::Any;
 
@@ -48,7 +48,6 @@ impl<'a> Value<'a> {
     }
 }
 */
-
 
 pub trait FromHashMap: Default {
     fn from_hashmap(hashmap: HashMap<String, String>) -> Self;
