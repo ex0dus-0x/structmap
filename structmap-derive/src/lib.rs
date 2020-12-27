@@ -48,24 +48,21 @@ pub fn from_hashmap(input: TokenStream) -> TokenStream {
                 #(
                     match hashmap.entry(String::from(#keys)) {
                         ::std::collections::hash_map::Entry::Occupied(entry) => {
-                            settings.#idents = parse_pair(entry.get());
+                            let val = match entry.get() {
+                                Value::Bool(val) => *val,
+                                Value::Int(val) => *val,
+                                Value::UInt(val) => *val,
+                                Value::String(val) => val,
+                                Value::Array(val) => val,
+                                Value::Null => unimplemented!(),
+                            };
+                            settings.#idents = val;
                         },
                         ::std::collections::hash_map::Entry::Vacant(_) => {},
                     }
                 )*
                 settings
             }
-        }
-
-        fn parse_pair<T>(v: Value) -> T where T: ::std::str::FromStr {
-            /*
-            let res = v.parse::<T>();
-            match res {
-                Ok(val) => val,
-                Err(_) => panic!(format!("Unable to convert input to type")),
-            }
-            */
-            todo!()
         }
     };
     TokenStream::from(tokens)
@@ -172,14 +169,13 @@ pub fn to_hashmap(input_struct: TokenStream) -> TokenStream {
 
     // start codegen for to_hashmap functionality that converts a struct into a hashmap
     let tokens = quote! {
-
-        use structmap::value::Value;
+        //use structmap::value::Value;
 
         impl #impl_generics ToHashMap for #name #ty_generics #where_clause {
             fn to_hashmap(mut input_struct: #name) -> ::std::collections::HashMap<String, Value> {
-                let mut hm: ::std::collections::HashMap<String, String> = ::std::collections::HashMap::new();
+                let mut hm: ::std::collections::HashMap<String, Value> = ::std::collections::HashMap::new();
                 #(
-                    hm.insert(#keys.to_string(), input_struct.#idents);
+                    hm.insert(#keys.to_string(), Value::to_value(input_struct.#idents));
                 )*
                 hm
             }
