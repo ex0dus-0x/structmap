@@ -1,6 +1,7 @@
 use std::any::Any;
 use std::fmt;
 
+
 /// Represents primitive types that are supported for conversion into a HashMap that can support
 /// heterogeneous values. Inspired by `serde_json::Value`s.
 #[derive(Debug, Clone)]
@@ -24,7 +25,7 @@ impl Value {
 
     /// Given a genericized input type, encapsulate it as a Value that can be used in a map
     /// container type when converting to and from a struct.
-    pub fn to_value<T: Any>(value: T) -> Value {
+    pub fn new<T: Any>(value: T) -> Value {
         let any_val = &value as &dyn Any;
         if let Some(val) = any_val.downcast_ref::<bool>() {
             Value::Bool(*val)
@@ -40,6 +41,56 @@ impl Value {
             Value::Array(val.to_vec())
         } else {
             Value::Null
+        }
+    }
+
+
+    /*
+    pub fn to_value(self) -> Box<Any> {
+        match self {
+            Value::Bool(val) => Box::new(val),
+            Value::Int(val) => Box::new(val),
+            Value::UInt(val) => Box::new(val),
+            Value::String(val) => Box::new(val),
+            _ => unimplemented!(),
+        }
+    }
+    */
+
+    /// Helper called by procedural macro to parse out bool primitive type
+    pub fn to_bool(&self) -> Option<bool> {
+        if let Value::Bool(val) = self {
+            Some(*val)
+        } else {
+            None
+        }
+    }
+
+    /// Helper called by procedural macro to parse out i32 primitive type
+    pub fn to_i32(&self) -> Option<i32> {
+        if let Value::Int(val) = self {
+            Some(*val)
+        } else {
+            None
+        }
+    }
+
+    /// Helper called by procedural macro to parse out i32 primitive type
+    pub fn to_u32(&self) -> Option<u32> {
+        if let Value::UInt(val) = self {
+            Some(*val)
+        } else {
+            None
+        }
+    }
+
+
+    /// Helper called by procedural macro to parse out String type
+    pub fn to_string(&self) -> Option<String> {
+        if let Value::String(string) = self {
+            Some(string.to_string())
+        } else {
+            None
         }
     }
 }
