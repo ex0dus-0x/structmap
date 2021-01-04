@@ -6,8 +6,8 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data, DeriveInput, Fields, Ident, Type};
 use syn::export::Span;
+use syn::{Data, DeriveInput, Fields, Ident, Type};
 
 use std::collections::HashMap;
 
@@ -40,13 +40,12 @@ pub fn from_hashmap(input: TokenStream) -> TokenStream {
         .iter()
         .map(|field| match field.ty.clone() {
             Type::Path(typepath) => {
-
                 // TODO: options and results
                 // TODO: vecs
                 // TODO: genericized numerics
 
                 // get the type of the specified field, lowercase
-                let typename: String = quote!{#typepath}.to_string().to_lowercase();
+                let typename: String = quote! {#typepath}.to_string().to_lowercase();
 
                 // TODO: exit on unsupported types
 
@@ -55,8 +54,8 @@ pub fn from_hashmap(input: TokenStream) -> TokenStream {
 
                 // initilaize new Ident for codegen
                 Ident::new(&func_call, Span::mixed_site())
-            },
-            _ => unimplemented!()
+            }
+            _ => unimplemented!(),
         })
         .collect::<Vec<Ident>>();
 
@@ -76,13 +75,13 @@ pub fn from_hashmap(input: TokenStream) -> TokenStream {
                 #(
                     match hashmap.entry(String::from(#keys)) {
                         ::std::collections::hash_map::Entry::Occupied(entry) => {
-                            
+
                             // parse out primitive value from generic type using typed call
                             let value = match entry.get().#typecalls() {
                                 Some(val) => val,
                                 None => unreachable!()
                             };
-                            
+
                             //let value = unbox(entry.get().to_value()) as #typecalls;
                             settings.#idents = value;
                         },
@@ -118,27 +117,20 @@ fn parse_rename_attrs(fields: &Fields) -> HashMap<String, String> {
                         Ok(syn::Meta::List(lst)) => {
                             // then parse key-value name
                             match lst.nested.first() {
-                                Some(syn::NestedMeta::Meta(meta)) => {
-                                    match meta {
-                                        syn::Meta::NameValue(nm) => {
-                                            // check path to be = `name`
-                                            let path = nm.path.get_ident().unwrap().to_string();
-                                            if path != "name" {
-                                                panic!("Must be `#[rename(name = 'VALUE')]`");
-                                            }
+                                Some(syn::NestedMeta::Meta(syn::Meta::NameValue(nm))) => {
+                                    // check path to be = `name`
+                                    let path = nm.path.get_ident().unwrap().to_string();
+                                    if path != "name" {
+                                        panic!("Must be `#[rename(name = 'VALUE')]`");
+                                    }
 
-                                            let lit = match &nm.lit {
-                                                syn::Lit::Str(val) => val.value(),
-                                                _ => {
-                                                    panic!("Must be `#[rename(name = 'VALUE')]`");
-                                                }
-                                            };
-                                            rename.insert(field_name, lit);
-                                        }
+                                    let lit = match &nm.lit {
+                                        syn::Lit::Str(val) => val.value(),
                                         _ => {
                                             panic!("Must be `#[rename(name = 'VALUE')]`");
                                         }
-                                    }
+                                    };
+                                    rename.insert(field_name, lit);
                                 }
                                 _ => {
                                     panic!("Must be `#[rename(name = 'VALUE')]`");

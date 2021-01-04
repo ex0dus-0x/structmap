@@ -1,7 +1,6 @@
 use std::any::Any;
 use std::fmt;
 
-
 /// Represents primitive types that are supported for conversion into a HashMap that can support
 /// heterogeneous values. Inspired by `serde_json::Value`s.
 #[derive(Debug, Clone)]
@@ -22,7 +21,6 @@ impl fmt::Display for Value {
 }
 
 impl Value {
-
     /// Given a genericized input type, encapsulate it as a Value that can be used in a map
     /// container type when converting to and from a struct.
     pub fn new<T: Any>(value: T) -> Value {
@@ -43,7 +41,6 @@ impl Value {
             Value::Null
         }
     }
-
 
     /*
     pub fn to_value(self) -> Box<Any> {
@@ -83,7 +80,6 @@ impl Value {
             None
         }
     }
-
 
     /// Helper called by procedural macro to parse out String type
     pub fn to_string(&self) -> Option<String> {

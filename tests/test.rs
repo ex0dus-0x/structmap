@@ -23,7 +23,6 @@ impl Default for TestStruct {
 
 #[test]
 fn test_hashmap_to_struct() {
-
     // first create a HashMap mapping identifier names to generic Value type
     let mut hm: HashMap<String, Value> = HashMap::new();
     hm.insert(String::from("name"), Value::new("example"));
@@ -47,7 +46,6 @@ fn test_struct_to_hashmap() {
     assert!(hm.get("name").unwrap().to_string().unwrap() == "example");
     assert!(hm.get("value").unwrap().to_i32().unwrap() == 0);
 }
-
 
 #[derive(ToHashMap)]
 struct TestStructRename {
