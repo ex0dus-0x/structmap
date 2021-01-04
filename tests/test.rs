@@ -26,8 +26,8 @@ fn test_hashmap_to_struct() {
 
     // first create a HashMap mapping identifier names to generic Value type
     let mut hm: HashMap<String, Value> = HashMap::new();
-    hm.insert(String::from("name"), Value::to_value("example"));
-    hm.insert(String::from("value"), Value::to_value(0));
+    hm.insert(String::from("name"), Value::new("example"));
+    hm.insert(String::from("value"), Value::new(0));
 
     // convert hashmap to struct, and check attributes
     let test: TestStruct = TestStruct::from_hashmap(hm);
@@ -35,7 +35,6 @@ fn test_hashmap_to_struct() {
     assert!(test.value == 0);
 }
 
-/*
 #[test]
 fn test_struct_to_hashmap() {
     let test_struct = TestStruct {
@@ -44,9 +43,9 @@ fn test_struct_to_hashmap() {
     };
 
     // convert struct to hashmap, and check attributes
-    let hm: HashMap<String, String> = TestStruct::to_hashmap(test_struct);
-    assert!(hm.get("name").unwrap() == "example");
-    assert!(hm.get("value").unwrap() == "0");
+    let hm: HashMap<String, Value> = TestStruct::to_hashmap(test_struct);
+    assert!(hm.get("name").unwrap().to_string().unwrap() == "example");
+    assert!(hm.get("value").unwrap().to_i32().unwrap() == 0);
 }
 
 
@@ -75,8 +74,7 @@ fn test_hm_to_struct_rename() {
         value: String::from("some_value"),
     };
 
-    let hm: HashMap<String, String> = TestStructRename::to_hashmap(test_struct);
-    assert!(hm.get("Full Name").unwrap() == "example");
-    assert!(hm.get("Data").unwrap() == "some_value");
+    let hm: HashMap<String, Value> = TestStructRename::to_hashmap(test_struct);
+    assert!(hm.get("Full Name").unwrap().to_string().unwrap() == "example");
+    assert!(hm.get("Data").unwrap().to_string().unwrap() == "some_value");
 }
-*/

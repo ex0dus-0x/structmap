@@ -6,7 +6,8 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data, DeriveInput, Fields, Ident};
+use syn::{Data, DeriveInput, Fields, Ident, Type};
+use syn::export::Span;
 
 use std::collections::HashMap;
 
@@ -34,6 +35,31 @@ pub fn from_hashmap(input: TokenStream) -> TokenStream {
         .map(|ident| ident.to_string())
         .collect::<Vec<String>>();
 
+    // parse out all the primitive types in the struct as Idents
+    let typecalls: Vec<Ident> = fields
+        .iter()
+        .map(|field| match field.ty.clone() {
+            Type::Path(typepath) => {
+
+                // TODO: options and results
+                // TODO: vecs
+                // TODO: genericized numerics
+
+                // get the type of the specified field, lowercase
+                let typename: String = quote!{#typepath}.to_string().to_lowercase();
+
+                // TODO: exit on unsupported types
+
+                // create function name to call on Value
+                let func_call: &str = &format!("to_{}", typename);
+
+                // initilaize new Ident for codegen
+                Ident::new(&func_call, Span::mixed_site())
+            },
+            _ => unimplemented!()
+        })
+        .collect::<Vec<Ident>>();
+
     // get the name identifier of the struct input AST
     let name: &Ident = &ast.ident;
     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
@@ -43,20 +69,22 @@ pub fn from_hashmap(input: TokenStream) -> TokenStream {
         use structmap::value::Value;
 
         impl #impl_generics FromHashMap for #name #ty_generics #where_clause {
+
+            /// Given a HashMap<String, Value> of valid structure, instantiate a struct
             fn from_hashmap(mut hashmap: ::std::collections::HashMap<String, Value>) -> #name {
                 let mut settings = #name::default();
                 #(
                     match hashmap.entry(String::from(#keys)) {
                         ::std::collections::hash_map::Entry::Occupied(entry) => {
-                            let val = match entry.get() {
-                                Value::Bool(val) => *val,
-                                Value::Int(val) => *val,
-                                Value::UInt(val) => *val,
-                                Value::String(val) => val,
-                                Value::Array(val) => val,
-                                Value::Null => unimplemented!(),
+                            
+                            // parse out primitive value from generic type using typed call
+                            let value = match entry.get().#typecalls() {
+                                Some(val) => val,
+                                None => unreachable!()
                             };
-                            settings.#idents = val;
+                            
+                            //let value = unbox(entry.get().to_value()) as #typecalls;
+                            settings.#idents = value;
                         },
                         ::std::collections::hash_map::Entry::Vacant(_) => {},
                     }
@@ -175,7 +203,7 @@ pub fn to_hashmap(input_struct: TokenStream) -> TokenStream {
             fn to_hashmap(mut input_struct: #name) -> ::std::collections::HashMap<String, Value> {
                 let mut hm: ::std::collections::HashMap<String, Value> = ::std::collections::HashMap::new();
                 #(
-                    hm.insert(#keys.to_string(), Value::to_value(input_struct.#idents));
+                    hm.insert(#keys.to_string(), Value::new(input_struct.#idents));
                 )*
                 hm
             }
