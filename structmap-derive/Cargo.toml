@@ -5,7 +5,7 @@ description = "Proc derive macro for structmap crate"
 authors = ["ex0dus-0x <ex0dus@codemuch.tech>"]
 license = "MIT"
 
-version = "0.1.1"
+version = "0.1.2"
 edition = "2018"
 
 [lib]
