@@ -6,54 +6,10 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data, DeriveInput, Fields, Ident};
+use syn::export::Span;
+use syn::{Data, DeriveInput, Fields, Ident, Type};
 
-//use std::fmt;
-//use std::any::Any;
 use std::collections::HashMap;
-
-/*
-/// Represents primitive types that are supported for conversion into a HashMap that can support
-/// heterogeneous values. Inspired by `serde_json::Value`s.
-#[derive(Debug, Clone)]
-enum Value<'a> {
-    Null,
-    Bool(bool),
-    Int(i32),
-    UInt(u32),
-    String(&'a str),
-}
-
-impl<'a> fmt::Display for Value<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self)
-    }
-}
-
-impl<'a> Value<'a> {
-    pub fn to_value<T: Any>(value: T) -> Value<'a> {
-        let any_val = &value as &dyn Any;
-        if let Some(val) = any_val.downcast_ref::<bool>() {
-            Value::Bool(*val)
-        }
-        else if let Some(val) = any_val.downcast_ref::<i32>() {
-            Value::Int(*val)
-        }
-        else if let Some(val) = any_val.downcast_ref::<u32>() {
-            Value::UInt(*val)
-        }
-        else if let Some(val) = any_val.downcast_ref::<&'static str>() {
-            Value::String(val)
-        } else {
-            Value::Null
-        }
-    }
-
-    pub fn from_value<T: Any>(value: Value<'a>) -> T {
-        todo!()
-    }
-}
-*/
 
 /// Implements the functionality for converting entries in a HashMap into attributes and values of a
 /// struct. It will consume a tokenized version of the initial struct declaration, and use code
@@ -79,32 +35,60 @@ pub fn from_hashmap(input: TokenStream) -> TokenStream {
         .map(|ident| ident.to_string())
         .collect::<Vec<String>>();
 
+    // parse out all the primitive types in the struct as Idents
+    let typecalls: Vec<Ident> = fields
+        .iter()
+        .map(|field| match field.ty.clone() {
+            Type::Path(typepath) => {
+                // TODO: options and results
+                // TODO: vecs
+                // TODO: genericized numerics
+
+                // get the type of the specified field, lowercase
+                let typename: String = quote! {#typepath}.to_string().to_lowercase();
+
+                // TODO: exit on unsupported types
+
+                // create function name to call on Value
+                let func_call: &str = &format!("to_{}", typename);
+
+                // initilaize new Ident for codegen
+                Ident::new(&func_call, Span::mixed_site())
+            }
+            _ => unimplemented!(),
+        })
+        .collect::<Vec<Ident>>();
+
     // get the name identifier of the struct input AST
     let name: &Ident = &ast.ident;
     let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
 
     // start codegen of a generic or non-generic impl for the given struct using quasi-quoting
     let tokens = quote! {
+        use structmap::value::Value;
+
         impl #impl_generics FromHashMap for #name #ty_generics #where_clause {
-            fn from_hashmap(mut hashmap: ::std::collections::HashMap<String, String>) -> #name {
+
+            /// Given a HashMap<String, Value> of valid structure, instantiate a struct
+            fn from_hashmap(mut hashmap: ::std::collections::HashMap<String, Value>) -> #name {
                 let mut settings = #name::default();
                 #(
                     match hashmap.entry(String::from(#keys)) {
                         ::std::collections::hash_map::Entry::Occupied(entry) => {
-                            settings.#idents = parse_pair(entry.get().as_str());
+
+                            // parse out primitive value from generic type using typed call
+                            let value = match entry.get().#typecalls() {
+                                Some(val) => val,
+                                None => unreachable!()
+                            };
+
+                            //let value = unbox(entry.get().to_value()) as #typecalls;
+                            settings.#idents = value;
                         },
                         ::std::collections::hash_map::Entry::Vacant(_) => {},
                     }
                 )*
                 settings
-            }
-        }
-
-        fn parse_pair<T>(v: &str) -> T where T: ::std::str::FromStr {
-            let res = v.parse::<T>();
-            match res {
-                Ok(val) => val,
-                Err(_) => panic!(format!("Unable to convert input to type")),
             }
         }
     };
@@ -133,27 +117,20 @@ fn parse_rename_attrs(fields: &Fields) -> HashMap<String, String> {
                         Ok(syn::Meta::List(lst)) => {
                             // then parse key-value name
                             match lst.nested.first() {
-                                Some(syn::NestedMeta::Meta(meta)) => {
-                                    match meta {
-                                        syn::Meta::NameValue(nm) => {
-                                            // check path to be = `name`
-                                            let path = nm.path.get_ident().unwrap().to_string();
-                                            if path != "name" {
-                                                panic!("Must be `#[rename(name = 'VALUE')]`");
-                                            }
+                                Some(syn::NestedMeta::Meta(syn::Meta::NameValue(nm))) => {
+                                    // check path to be = `name`
+                                    let path = nm.path.get_ident().unwrap().to_string();
+                                    if path != "name" {
+                                        panic!("Must be `#[rename(name = 'VALUE')]`");
+                                    }
 
-                                            let lit = match &nm.lit {
-                                                syn::Lit::Str(val) => val.value(),
-                                                _ => {
-                                                    panic!("Must be `#[rename(name = 'VALUE')]`");
-                                                }
-                                            };
-                                            rename.insert(field_name, lit);
-                                        }
+                                    let lit = match &nm.lit {
+                                        syn::Lit::Str(val) => val.value(),
                                         _ => {
                                             panic!("Must be `#[rename(name = 'VALUE')]`");
                                         }
-                                    }
+                                    };
+                                    rename.insert(field_name, lit);
                                 }
                                 _ => {
                                     panic!("Must be `#[rename(name = 'VALUE')]`");
@@ -212,11 +189,13 @@ pub fn to_hashmap(input_struct: TokenStream) -> TokenStream {
 
     // start codegen for to_hashmap functionality that converts a struct into a hashmap
     let tokens = quote! {
+        //use structmap::value::Value;
+
         impl #impl_generics ToHashMap for #name #ty_generics #where_clause {
-            fn to_hashmap(mut input_struct: #name) -> ::std::collections::HashMap<String, String> {
-                let mut hm: ::std::collections::HashMap<String, String> = ::std::collections::HashMap::new();
+            fn to_hashmap(mut input_struct: #name) -> ::std::collections::HashMap<String, Value> {
+                let mut hm: ::std::collections::HashMap<String, Value> = ::std::collections::HashMap::new();
                 #(
-                    hm.insert(#keys.to_string(), input_struct.#idents);
+                    hm.insert(#keys.to_string(), Value::new(input_struct.#idents));
                 )*
                 hm
             }
