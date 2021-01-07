@@ -5,8 +5,9 @@
 extern crate proc_macro;
 
 use proc_macro::TokenStream;
+use proc_macro2::Span;
+
 use quote::quote;
-use syn::export::Span;
 use syn::{Data, DeriveInput, Fields, Ident, Type};
 
 use std::collections::HashMap;
