@@ -3,8 +3,10 @@
 
 pub mod value;
 
-use crate::value::Value;
 use std::collections::{BTreeMap, HashMap};
+use std::hash::Hash;
+
+use crate::value::Value;
 
 // Alias for HashMap with String keys and values
 pub type StringMap = HashMap<String, String>;
@@ -12,20 +14,56 @@ pub type StringMap = HashMap<String, String>;
 // Alias for HashMap with String keys and generic values
 pub type GenericMap = HashMap<String, Value>;
 
-pub trait MapTrait<K, V> {}
-impl<K: Eq + Hash MapTrait for HashMap<K, V> {}
-impl MapTrait for BTreeMap<K, V> {}
-
-pub trait FromMap: Default {
-    fn from_map<T: MapTrait>(hashmap: T) -> Self;
-    fn from_stringmap(hashmap: StringMap) -> Self;
-    fn from_genericmap(hashmap: GenericMap) -> Self;
-    //fn from_btreemap(btreemap: BTreeMap<String, Value>) -> Self;
+// Blanket trait abstraction over map containers in Rust
+pub trait MapTrait<V> {
+    fn map_get(&self, key: &String) -> Option<&V>;
 }
 
-#[allow(clippy::wrong_self_convention)]
+impl<'a, V> MapTrait<V> for &'a HashMap<String, V>
+where
+    V: std::any::Any,
+{
+    fn map_get(&self, key: &String) -> Option<&V> {
+        self.get(key)
+    }
+}
+
+impl<'a, V> MapTrait<V> for &'a BTreeMap<String, V>
+where
+    V: std::any::Any,
+{
+    fn map_get(&self, key: &String) -> Option<&V> {
+        self.get(key)
+    }
+}
+
+pub trait FromMap: Default {
+
+    fn from_map<V, T>(hashmap: T) -> Self
+    where
+        T: MapTrait<V>;
+
+    /*
+    /// Converts a `StringMap` back into a structure.
+    /// __Constraints__: assumes that value types conform to the original types of the struct.
+    fn from_stringmap(hashmap: StringMap) -> Self;
+    */
+
+    /// Converts a `GenericMap` back into a structure.
+    /// __Constraints__: assumes that value types conform to the original types of the struct.
+    fn from_genericmap(hashmap: GenericMap) -> Self;
+}
+
 pub trait ToMap: Default {
+    fn to_map<V, T>(structure: Self) -> T
+    where
+        T: MapTrait<V>;
+
+    /// Generates a `StringMap` where value types are all casted to strings.
+    /// __Constraints__: one-way, will need additional work to re-convert to struct.
     fn to_stringmap(structure: Self) -> StringMap;
+
+    /// Generates a `GenericMap` where value types are all encapsulated under a sum type.
+    /// __Constraints__: currently only supports primitive types for genericized values.
     fn to_genericmap(structure: Self) -> GenericMap;
-    //fn to_btreemap(structure: Self) -> BTreeMap<String, Value>;
 }

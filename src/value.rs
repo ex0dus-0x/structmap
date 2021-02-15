@@ -55,7 +55,7 @@ impl Value {
     */
 
     /// Helper called by procedural macro to parse out bool primitive type
-    pub fn to_bool(&self) -> Option<bool> {
+    pub fn bool(&self) -> Option<bool> {
         if let Value::Bool(val) = self {
             Some(*val)
         } else {
@@ -64,7 +64,7 @@ impl Value {
     }
 
     /// Helper called by procedural macro to parse out i32 primitive type
-    pub fn to_i32(&self) -> Option<i32> {
+    pub fn i32(&self) -> Option<i32> {
         if let Value::Int(val) = self {
             Some(*val)
         } else {
@@ -73,7 +73,7 @@ impl Value {
     }
 
     /// Helper called by procedural macro to parse out i32 primitive type
-    pub fn to_u32(&self) -> Option<u32> {
+    pub fn u32(&self) -> Option<u32> {
         if let Value::UInt(val) = self {
             Some(*val)
         } else {
@@ -82,7 +82,7 @@ impl Value {
     }
 
     /// Helper called by procedural macro to parse out String type
-    pub fn to_string(&self) -> Option<String> {
+    pub fn string(&self) -> Option<String> {
         if let Value::String(string) = self {
             Some(string.to_string())
         } else {
