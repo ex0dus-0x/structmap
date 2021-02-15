@@ -6,20 +6,26 @@ pub mod value;
 use crate::value::Value;
 use std::collections::{BTreeMap, HashMap};
 
-pub trait FromHashMap: Default {
-    fn from_hashmap(hashmap: HashMap<String, Value>) -> Self;
+// Alias for HashMap with String keys and values
+pub type StringMap = HashMap<String, String>;
+
+// Alias for HashMap with String keys and generic values
+pub type GenericMap = HashMap<String, Value>;
+
+pub trait MapTrait<K, V> {}
+impl<K: Eq + Hash MapTrait for HashMap<K, V> {}
+impl MapTrait for BTreeMap<K, V> {}
+
+pub trait FromMap: Default {
+    fn from_map<T: MapTrait>(hashmap: T) -> Self;
+    fn from_stringmap(hashmap: StringMap) -> Self;
+    fn from_genericmap(hashmap: GenericMap) -> Self;
+    //fn from_btreemap(btreemap: BTreeMap<String, Value>) -> Self;
 }
 
 #[allow(clippy::wrong_self_convention)]
-pub trait ToHashMap: Default {
-    fn to_hashmap(structure: Self) -> HashMap<String, Value>;
-}
-
-pub trait FromBTreeMap: Default {
-    fn from_btreemap(btreemap: BTreeMap<String, Value>) -> Self;
-}
-
-#[allow(clippy::wrong_self_convention)]
-pub trait ToBTreeMap: Default {
-    fn to_btreemap(structure: Self) -> BTreeMap<String, Value>;
+pub trait ToMap: Default {
+    fn to_stringmap(structure: Self) -> StringMap;
+    fn to_genericmap(structure: Self) -> GenericMap;
+    //fn to_btreemap(structure: Self) -> BTreeMap<String, Value>;
 }
