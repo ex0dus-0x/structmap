@@ -13,12 +13,7 @@
 [docs-badge]: https://docs.rs/structmap/badge.svg
 [docs.rs]: https://docs.rs/structmap
 
-Procedural macro library for converting between Rust `struct` types and associative containers.
-
-## Introduction
-
-One concern that I've repeatedly come upon when writing Rust is the lack of operability between converting highly structured types, and more "raw" map structures.
-This may be the case for instances where we want to represent structured data in a more tabulated format, or the other way around, without resorting to long conditional pattern matching:
+Procedural macro crate for converting between Rust `struct` types and associative containers.
 
 ```rust
 // converting between a struct like ...
@@ -26,13 +21,14 @@ struct SomeData {
     key: String
 }
 
-// ... and an associative map type like ...
+// ... and a HashMap like ...
 let somedata_hm = HashMap::new();
 ```
 
-Using metaprogramming and code generation capabilities  supported by Rust's support for _procedural macros_, I decided to implement this crate to simply provide conversion support between structs (abstractly known as _product types_), and associative containers, including `HashMap`s and `BTreeMap`s (TODO).
+This removes the need to pattern match on attributes and keys when making a conversion.
 
-This was largely inspired by previous work done by @ameo, linked in his blog [here](https://cprimozic.net/blog/writing-a-hashmap-to-struct-procedural-macro-in-rust/), but extends on it to support conversion both ways. This crate contains code that is supported for Rust 2018, and includes updated dependencies for AST parsing and code generation. It includes one subcrate, `structmap-derive`, which implements the actual procedural macro.
+This was largely inspired by [previous work](https://cprimozic.net/blog/writing-a-hashmap-to-struct-procedural-macro-in-rust/) done by [@Ameobea](https://github.com/Ameobea),
+but extends on it much further to support conversion both ways, generic value types, and Rust 2018 conventions.
 
 ## Usage
 
@@ -40,7 +36,7 @@ In your `Cargo.toml` file, include the crate as so:
 
 ```
 [dependencies]
-structmap = "0.1.0"
+structmap = "0.1"
 ```
 
 Now let's demonstrate conversion! Note that your `struct` type should extend the `Default` trait for type conversion to account for uninitialized attributes.
