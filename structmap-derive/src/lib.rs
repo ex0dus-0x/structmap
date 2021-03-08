@@ -64,23 +64,18 @@ pub fn from_map(input: TokenStream) -> TokenStream {
     // start codegen of a generic or non-generic impl for the given struct using quasi-quoting
     let tokens = quote! {
         use structmap::value::Value;
-        use structmap::{StringMap, GenericMap, MapTrait};
+        use structmap::{StringMap, GenericMap};
 
         impl #impl_generics FromMap for #name #ty_generics #where_clause {
 
-            fn from_map<V, T>(hashmap: T) -> #name
-            where
-                T: MapTrait<V>,
-            {
+            fn from_stringmap(hashmap: StringMap) -> #name {
                 let mut settings = #name::default();
                 #(
-                    let value = match hashmap.map_get(&String::from(#keys)) {
-                        Some(val) => val,
-                        None => unreachable!()
-                    };
-
-                    // this will fail if type doesn't conform
-                    settings.#idents = value as #typecalls;
+                    match hashmap.entry(String::from(#keys)) {
+                        ::std::collections::hash_map::Entry::Occupied(entry) => {
+                            settings.#idents = unimplemented!();
+                        }
+                    }
                 )*
                 settings
             }
@@ -148,27 +143,20 @@ pub fn to_map(input_struct: TokenStream) -> TokenStream {
 
         impl #impl_generics ToMap for #name #ty_generics #where_clause {
 
-            fn to_map<V, T>(structure: Self) -> T
-            where
-                T: MapTrait<V>
-            {
-                todo!()
-            }
-
             fn to_stringmap(mut input_struct: #name) -> StringMap {
-                let mut hm = StringMap::new();
+                let mut map = StringMap::new();
                 #(
-                    hm.insert(#keys.to_string(), input_struct.#idents.to_string());
+                    map.insert(#keys.to_string(), input_struct.#idents.to_string());
                 )*
-                hm
+                map
             }
 
             fn to_genericmap(mut input_struct: #name) -> GenericMap {
-                let mut hm = GenericMap::new();
+                let mut map = GenericMap::new();
                 #(
-                    hm.insert(#keys.to_string(), Value::new(input_struct.#idents));
+                    map.insert(#keys.to_string(), Value::new(input_struct.#idents));
                 )*
-                hm
+                map
             }
         }
     };
@@ -230,4 +218,3 @@ fn parse_rename_attrs(fields: &Fields) -> HashMap<String, String> {
     }
     rename
 }
-
