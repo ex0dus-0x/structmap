@@ -14,6 +14,7 @@ pub type StringMap = HashMap<String, String>;
 // Alias for HashMap with String keys and generic values
 pub type GenericMap = HashMap<String, Value>;
 
+/*
 // Blanket trait abstraction over map containers in Rust
 pub trait MapTrait<V> {
     fn map_get(&self, key: &String) -> Option<&V>;
@@ -36,18 +37,13 @@ where
         self.get(key)
     }
 }
+*/
 
 pub trait FromMap: Default {
 
-    fn from_map<V, T>(hashmap: T) -> Self
-    where
-        T: MapTrait<V>;
-
-    /*
     /// Converts a `StringMap` back into a structure.
     /// __Constraints__: assumes that value types conform to the original types of the struct.
     fn from_stringmap(hashmap: StringMap) -> Self;
-    */
 
     /// Converts a `GenericMap` back into a structure.
     /// __Constraints__: assumes that value types conform to the original types of the struct.
@@ -55,9 +51,6 @@ pub trait FromMap: Default {
 }
 
 pub trait ToMap: Default {
-    fn to_map<V, T>(structure: Self) -> T
-    where
-        T: MapTrait<V>;
 
     /// Generates a `StringMap` where value types are all casted to strings.
     /// __Constraints__: one-way, will need additional work to re-convert to struct.

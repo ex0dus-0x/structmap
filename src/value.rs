@@ -42,17 +42,6 @@ impl Value {
         }
     }
 
-    /*
-    pub fn to_value(self) -> Box<Any> {
-        match self {
-            Value::Bool(val) => Box::new(val),
-            Value::Int(val) => Box::new(val),
-            Value::UInt(val) => Box::new(val),
-            Value::String(val) => Box::new(val),
-            _ => unimplemented!(),
-        }
-    }
-    */
 
     /// Helper called by procedural macro to parse out bool primitive type
     pub fn bool(&self) -> Option<bool> {
