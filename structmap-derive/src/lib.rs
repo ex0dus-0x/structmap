@@ -22,7 +22,7 @@ pub fn from_map(input: TokenStream) -> TokenStream {
     // parse out all the field names in the struct as `Ident`s
     let fields = match ast.data {
         Data::Struct(st) => st.fields,
-        _ => unimplemented!(),
+        _ => panic!("Implementation must be a struct"),
     };
     let idents: Vec<&Ident> = fields
         .iter()
@@ -68,19 +68,26 @@ pub fn from_map(input: TokenStream) -> TokenStream {
 
         impl #impl_generics FromMap for #name #ty_generics #where_clause {
 
-            fn from_stringmap(hashmap: StringMap) -> #name {
+            fn from_stringmap(mut hashmap: StringMap) -> #name {
                 let mut settings = #name::default();
+                /* TODO
                 #(
                     match hashmap.entry(String::from(#keys)) {
                         ::std::collections::hash_map::Entry::Occupied(entry) => {
-                            settings.#idents = unimplemented!();
-                        }
+                            let value = match entry.get() {
+                                Some(val) => val.parse::<#typecalls>().unwrap(),
+                                None => unreachable!()
+                            };
+                            settings.#idents = value;
+                        },
+                        _ => unreachable!()
                     }
                 )*
+                */
                 settings
             }
 
-            fn from_genericmap(hashmap: GenericMap) -> #name {
+            fn from_genericmap(mut hashmap: GenericMap) -> #name {
                 let mut settings = #name::default();
                 #(
                     match hashmap.entry(String::from(#keys)) {
@@ -92,7 +99,7 @@ pub fn from_map(input: TokenStream) -> TokenStream {
                             };
                             settings.#idents = value;
                         },
-                        _ => {}
+                        _ => unreachable!()
                     }
                 )*
                 settings
@@ -111,7 +118,7 @@ pub fn to_map(input_struct: TokenStream) -> TokenStream {
     // check for struct type and parse out fields
     let fields = match ast.data {
         Data::Struct(st) => st.fields,
-        _ => unimplemented!(),
+        _ => panic!("Implementation must be a struct"),
     };
 
     // before unrolling out more, get mapping of any renaming needed to be done

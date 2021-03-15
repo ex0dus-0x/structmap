@@ -3,8 +3,7 @@
 
 pub mod value;
 
-use std::collections::{BTreeMap, HashMap};
-use std::hash::Hash;
+use std::collections::HashMap;
 
 use crate::value::Value;
 

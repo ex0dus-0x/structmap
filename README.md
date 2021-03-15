@@ -41,53 +41,58 @@ structmap = "0.1"
 
 Now let's demonstrate conversion! Note that your `struct` type should extend the `Default` trait for type conversion to account for uninitialized attributes.
 
+__structmap__ supports conversion between two types of map aliases:
+
+1. `StringMap` - Strings for both keys and values. Conversion is supported only one-way at the moment from struct to HashMap.
+2. `GenericMap` - Generic [serde](https://docs.serde.rs/serde_json/enum.Value.html)-style `Value`s as values. Conversion is supported both ways, but limited.
+
 ### Map to Struct
 
 ```rust
-use structmap::FromHashMap;
-use structmap_derive::FromHashMap;
+use structmap::FromMap;
+use structmap_derive::FromMap;
 
 #[derive(FromHashMap)]
 struct TestStruct {
     name: String,
-    value: String,
+    value: i32,
 }
 
 impl Default for TestStruct {
     fn default() -> Self {
         Self {
-            name: String::new(),
-            value: String::new(),
+            name: String::new()
+            value: 0
         }
     }
 }
 
 fn main() {
 	// create a hashmap with key-value pairs
-    let mut hm = HashMap::new();
+    let mut hm = GenericMap::new();
 
     // `Value` is an enum wrapper to support genericized types, to support structs
     // with varying types for their fields.
     hm.insert(String::from("name"), Value::new(String::from("example")));
-    hm.insert(String::from("value"), Value::new(String::from("some_value")));
+    hm.insert(String::from("value"), Value::new(0));
 
     // convert hashmap to struct, and check attributes
-    let test: TestStruct = TestStruct::from_hashmap(hm);
+    let test: TestStruct = TestStruct::from_genericmap(hm);
     assert!(test.name == "example");
-    assert!(test.value == "some_value");
+    assert!(test.value == 0);
 }
 ```
 
 ### Struct to Map
 
 ```rust
-use structmap::ToHashMap;
-use structmap_derive::ToHashMap;
+use structmap::ToMap;
+use structmap_derive::ToMap;
 
 #[derive(ToHashMap)]
 struct TestStruct {
     name: String,
-    value: String,
+    value: i32,
 }
 
 // impl Default ...
@@ -95,11 +100,16 @@ struct TestStruct {
 fn main() {
     let test_struct = TestStruct {
         name: String::from("example"),
-        value: String::from("some_value"),
+        value: 0,
     };
 
-    // convert struct to hashmap, and check attributes
-    let hm: HashMap<String, Value> = TestStruct::to_hashmap(test_struct);
+    // convert struct to generic map, and check attributes
+    let hm: HashMap<String, Value> = TestStruct::to_genericmap(test_struct);
+    assert!(hm.get("name").unwrap().string().unwrap() == "example");
+    assert!(hm.get("value").unwrap().i32().unwrap() == 0);
+
+    // convert struct to string map, and check attributes
+    let hm: HashMap<String, Value> = TestStruct::to_stringmap(test_struct);
     assert!(hm.get("name").unwrap().to_string().unwrap() == "example");
     assert!(hm.get("value").unwrap().to_string().unwrap() == "some_value");
 }
@@ -129,7 +139,7 @@ following:
 * `String`s and `&str`s
 
 All other types, include dynamic arrays, `Option`s, `Result`s and complex structures are not yet
-supported (which you can help implement)
+supported (which you can help implement).
 
 ## Contributions
 
