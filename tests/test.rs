@@ -1,12 +1,9 @@
 //! Defines a set of unit tests in order to test the conversion functionality between struct types
 //! and associative containers.
+use structmap::{FromMap, ToMap};
+use structmap_derive::{FromMap, ToMap};
 
-use std::collections::HashMap;
-
-use structmap::{FromHashMap, ToHashMap};
-use structmap_derive::{FromHashMap, ToHashMap};
-
-#[derive(FromHashMap, ToHashMap)]
+#[derive(FromMap, ToMap)]
 struct TestStruct {
     name: String,
     value: i32,
@@ -21,33 +18,55 @@ impl Default for TestStruct {
     }
 }
 
+/*
 #[test]
-fn test_hashmap_to_struct() {
-    // first create a HashMap mapping identifier names to generic Value type
-    let mut hm: HashMap<String, Value> = HashMap::new();
+fn test_stringmap_to_struct() {
+    let mut hm = StringMap::new();
+    hm.insert(String::from("name"), String::from("example"));
+    hm.insert(String::from("value"), String::from("0"));
+
+    let test: TestStruct = TestStruct::from_stringmap(hm);
+    assert!(test.name == "example");
+    assert!(test.value == 0);
+}
+*/
+
+#[test]
+fn test_genericmap_to_struct() {
+    let mut hm = GenericMap::new();
     hm.insert(String::from("name"), Value::new("example"));
     hm.insert(String::from("value"), Value::new(0));
 
-    // convert hashmap to struct, and check attributes
-    let test: TestStruct = TestStruct::from_hashmap(hm);
+    let test: TestStruct = TestStruct::from_genericmap(hm);
     assert!(test.name == "example");
     assert!(test.value == 0);
 }
 
 #[test]
-fn test_struct_to_hashmap() {
+fn test_struct_to_stringmap() {
     let test_struct = TestStruct {
         name: String::from("example"),
         value: 0,
     };
 
-    // convert struct to hashmap, and check attributes
-    let hm: HashMap<String, Value> = TestStruct::to_hashmap(test_struct);
-    assert!(hm.get("name").unwrap().to_string().unwrap() == "example");
-    assert!(hm.get("value").unwrap().to_i32().unwrap() == 0);
+    let hm: StringMap = TestStruct::to_stringmap(test_struct);
+    assert!(hm.get("name").unwrap() == "example");
+    assert!(hm.get("value").unwrap() == "0");
 }
 
-#[derive(ToHashMap)]
+#[test]
+fn test_struct_to_genericmap() {
+    let test_struct = TestStruct {
+        name: String::from("example"),
+        value: 0,
+    };
+
+    let hm = TestStruct::to_genericmap(test_struct);
+    assert!(hm.get("name").unwrap().string().unwrap() == "example");
+    assert!(hm.get("value").unwrap().i32().unwrap() == 0);
+}
+
+#[derive(ToMap)]
 struct TestStructRename {
     #[rename(name = "Full Name")]
     name: String,
@@ -66,13 +85,13 @@ impl Default for TestStructRename {
 }
 
 #[test]
-fn test_hm_to_struct_rename() {
+fn test_map_to_struct_rename() {
     let test_struct = TestStructRename {
         name: String::from("example"),
         value: String::from("some_value"),
     };
 
-    let hm: HashMap<String, Value> = TestStructRename::to_hashmap(test_struct);
-    assert!(hm.get("Full Name").unwrap().to_string().unwrap() == "example");
-    assert!(hm.get("Data").unwrap().to_string().unwrap() == "some_value");
+    let hm = TestStructRename::to_stringmap(test_struct);
+    assert!(hm.get("Full Name").unwrap().to_string() == "example");
+    assert!(hm.get("Data").unwrap().to_string() == "some_value");
 }
