@@ -14,15 +14,15 @@ use std::collections::HashMap;
 
 /// Implements the functionality for converting entries in a HashMap into attributes and values of a
 /// struct. It will consume a tokenized version of the initial struct declaration, and use code
-/// generation to implement the `FromHashMap` trait for instantiating the contents of the struct.
-#[proc_macro_derive(FromHashMap)]
-pub fn from_hashmap(input: TokenStream) -> TokenStream {
+/// generation to implement the `FromMap` trait for instantiating the contents of the struct.
+#[proc_macro_derive(FromMap)]
+pub fn from_map(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input as DeriveInput);
 
     // parse out all the field names in the struct as `Ident`s
     let fields = match ast.data {
         Data::Struct(st) => st.fields,
-        _ => unimplemented!(),
+        _ => panic!("Implementation must be a struct"),
     };
     let idents: Vec<&Ident> = fields
         .iter()
@@ -50,11 +50,8 @@ pub fn from_hashmap(input: TokenStream) -> TokenStream {
 
                 // TODO: exit on unsupported types
 
-                // create function name to call on Value
-                let func_call: &str = &format!("to_{}", typename);
-
-                // initilaize new Ident for codegen
-                Ident::new(&func_call, Span::mixed_site())
+                // initialize new Ident for codegen
+                Ident::new(&typename, Span::mixed_site())
             }
             _ => unimplemented!(),
         })
@@ -67,26 +64,42 @@ pub fn from_hashmap(input: TokenStream) -> TokenStream {
     // start codegen of a generic or non-generic impl for the given struct using quasi-quoting
     let tokens = quote! {
         use structmap::value::Value;
+        use structmap::{StringMap, GenericMap};
 
-        impl #impl_generics FromHashMap for #name #ty_generics #where_clause {
+        impl #impl_generics FromMap for #name #ty_generics #where_clause {
 
-            /// Given a HashMap<String, Value> of valid structure, instantiate a struct
-            fn from_hashmap(mut hashmap: ::std::collections::HashMap<String, Value>) -> #name {
+            fn from_stringmap(mut hashmap: StringMap) -> #name {
+                let mut settings = #name::default();
+                /* TODO
+                #(
+                    match hashmap.entry(String::from(#keys)) {
+                        ::std::collections::hash_map::Entry::Occupied(entry) => {
+                            let value = match entry.get() {
+                                Some(val) => val.parse::<#typecalls>().unwrap(),
+                                None => unreachable!()
+                            };
+                            settings.#idents = value;
+                        },
+                        _ => unreachable!()
+                    }
+                )*
+                */
+                settings
+            }
+
+            fn from_genericmap(mut hashmap: GenericMap) -> #name {
                 let mut settings = #name::default();
                 #(
                     match hashmap.entry(String::from(#keys)) {
                         ::std::collections::hash_map::Entry::Occupied(entry) => {
-
                             // parse out primitive value from generic type using typed call
                             let value = match entry.get().#typecalls() {
                                 Some(val) => val,
                                 None => unreachable!()
                             };
-
-                            //let value = unbox(entry.get().to_value()) as #typecalls;
                             settings.#idents = value;
                         },
-                        ::std::collections::hash_map::Entry::Vacant(_) => {},
+                        _ => unreachable!()
                     }
                 )*
                 settings
@@ -96,8 +109,69 @@ pub fn from_hashmap(input: TokenStream) -> TokenStream {
     TokenStream::from(tokens)
 }
 
+/// Converts a given input struct into a HashMap where the keys are the attribute names assigned to
+/// the values of the entries.
+#[proc_macro_derive(ToMap, attributes(rename))]
+pub fn to_map(input_struct: TokenStream) -> TokenStream {
+    let ast = syn::parse_macro_input!(input_struct as DeriveInput);
+
+    // check for struct type and parse out fields
+    let fields = match ast.data {
+        Data::Struct(st) => st.fields,
+        _ => panic!("Implementation must be a struct"),
+    };
+
+    // before unrolling out more, get mapping of any renaming needed to be done
+    let rename_map = parse_rename_attrs(&fields);
+
+    // parse out all the field names in the struct as `Ident`s
+    let idents: Vec<&Ident> = fields
+        .iter()
+        .filter_map(|field| field.ident.as_ref())
+        .collect::<Vec<&Ident>>();
+
+    // convert all the field names into strings
+    let keys: Vec<String> = idents
+        .clone()
+        .iter()
+        .map(|ident| ident.to_string())
+        .map(|name| match rename_map.contains_key(&name) {
+            true => rename_map.get(&name).unwrap().clone(),
+            false => name,
+        })
+        .collect::<Vec<String>>();
+
+    // get the name identifier of the struct input AST
+    let name: &Ident = &ast.ident;
+    let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
+
+    // start codegen for to_hashmap functionality that converts a struct into a hashmap
+    let tokens = quote! {
+
+        impl #impl_generics ToMap for #name #ty_generics #where_clause {
+
+            fn to_stringmap(mut input_struct: #name) -> StringMap {
+                let mut map = StringMap::new();
+                #(
+                    map.insert(#keys.to_string(), input_struct.#idents.to_string());
+                )*
+                map
+            }
+
+            fn to_genericmap(mut input_struct: #name) -> GenericMap {
+                let mut map = GenericMap::new();
+                #(
+                    map.insert(#keys.to_string(), Value::new(input_struct.#idents));
+                )*
+                map
+            }
+        }
+    };
+    TokenStream::from(tokens)
+}
+
 /// Helper method used to parse out any `rename` attribute definitions in a struct
-/// marked with the ToHashMap trait, returning a mapping between the original field name
+/// marked with the ToMap trait, returning a mapping between the original field name
 /// and the one being changed for later use when doing codegen.
 fn parse_rename_attrs(fields: &Fields) -> HashMap<String, String> {
     let mut rename: HashMap<String, String> = HashMap::new();
@@ -150,57 +224,4 @@ fn parse_rename_attrs(fields: &Fields) -> HashMap<String, String> {
         }
     }
     rename
-}
-
-/// Converts a given input struct into a HashMap where the keys are the attribute names assigned to
-/// the values of the entries.
-#[proc_macro_derive(ToHashMap, attributes(rename))]
-pub fn to_hashmap(input_struct: TokenStream) -> TokenStream {
-    let ast = syn::parse_macro_input!(input_struct as DeriveInput);
-
-    // check for struct type and parse out fields
-    let fields = match ast.data {
-        Data::Struct(st) => st.fields,
-        _ => unimplemented!(),
-    };
-
-    // before unrolling out more, get mapping of any renaming needed to be done
-    let rename_map = parse_rename_attrs(&fields);
-
-    // parse out all the field names in the struct as `Ident`s
-    let idents: Vec<&Ident> = fields
-        .iter()
-        .filter_map(|field| field.ident.as_ref())
-        .collect::<Vec<&Ident>>();
-
-    // convert all the field names into strings
-    let keys: Vec<String> = idents
-        .clone()
-        .iter()
-        .map(|ident| ident.to_string())
-        .map(|name| match rename_map.contains_key(&name) {
-            true => rename_map.get(&name).unwrap().clone(),
-            false => name,
-        })
-        .collect::<Vec<String>>();
-
-    // get the name identifier of the struct input AST
-    let name: &Ident = &ast.ident;
-    let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
-
-    // start codegen for to_hashmap functionality that converts a struct into a hashmap
-    let tokens = quote! {
-        //use structmap::value::Value;
-
-        impl #impl_generics ToHashMap for #name #ty_generics #where_clause {
-            fn to_hashmap(mut input_struct: #name) -> ::std::collections::HashMap<String, Value> {
-                let mut hm: ::std::collections::HashMap<String, Value> = ::std::collections::HashMap::new();
-                #(
-                    hm.insert(#keys.to_string(), Value::new(input_struct.#idents));
-                )*
-                hm
-            }
-        }
-    };
-    TokenStream::from(tokens)
 }

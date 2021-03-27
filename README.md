@@ -13,12 +13,7 @@
 [docs-badge]: https://docs.rs/structmap/badge.svg
 [docs.rs]: https://docs.rs/structmap
 
-Procedural macro library for converting between Rust `struct` types and associative containers.
-
-## Introduction
-
-One concern that I've repeatedly come upon when writing Rust is the lack of operability between converting highly structured types, and more "raw" map structures.
-This may be the case for instances where we want to represent structured data in a more tabulated format, or the other way around, without resorting to long conditional pattern matching:
+Procedural macro crate for converting between Rust `struct` types and associative containers.
 
 ```rust
 // converting between a struct like ...
@@ -26,13 +21,14 @@ struct SomeData {
     key: String
 }
 
-// ... and an associative map type like ...
+// ... and a HashMap like ...
 let somedata_hm = HashMap::new();
 ```
 
-Using metaprogramming and code generation capabilities  supported by Rust's support for _procedural macros_, I decided to implement this crate to simply provide conversion support between structs (abstractly known as _product types_), and associative containers, including `HashMap`s and `BTreeMap`s (TODO).
+This removes the need to pattern match on attributes and keys when making a conversion.
 
-This was largely inspired by previous work done by @ameo, linked in his blog [here](https://cprimozic.net/blog/writing-a-hashmap-to-struct-procedural-macro-in-rust/), but extends on it to support conversion both ways. This crate contains code that is supported for Rust 2018, and includes updated dependencies for AST parsing and code generation. It includes one subcrate, `structmap-derive`, which implements the actual procedural macro.
+This was largely inspired by [previous work](https://cprimozic.net/blog/writing-a-hashmap-to-struct-procedural-macro-in-rust/) done by [@Ameobea](https://github.com/Ameobea),
+but extends on it much further to support conversion both ways, generic value types, and Rust 2018 conventions.
 
 ## Usage
 
@@ -40,58 +36,63 @@ In your `Cargo.toml` file, include the crate as so:
 
 ```
 [dependencies]
-structmap = "0.1.0"
+structmap = "0.1"
 ```
 
 Now let's demonstrate conversion! Note that your `struct` type should extend the `Default` trait for type conversion to account for uninitialized attributes.
 
+__structmap__ supports conversion between two types of map aliases:
+
+1. `StringMap` - Strings for both keys and values. Conversion is supported only one-way at the moment from struct to HashMap.
+2. `GenericMap` - Generic [serde](https://docs.serde.rs/serde_json/enum.Value.html)-style `Value`s as values. Conversion is supported both ways, but limited.
+
 ### Map to Struct
 
 ```rust
-use structmap::FromHashMap;
-use structmap_derive::FromHashMap;
+use structmap::FromMap;
+use structmap_derive::FromMap;
 
 #[derive(FromHashMap)]
 struct TestStruct {
     name: String,
-    value: String,
+    value: i32,
 }
 
 impl Default for TestStruct {
     fn default() -> Self {
         Self {
-            name: String::new(),
-            value: String::new(),
+            name: String::new()
+            value: 0
         }
     }
 }
 
 fn main() {
 	// create a hashmap with key-value pairs
-    let mut hm = HashMap::new();
+    let mut hm = GenericMap::new();
 
     // `Value` is an enum wrapper to support genericized types, to support structs
     // with varying types for their fields.
     hm.insert(String::from("name"), Value::new(String::from("example")));
-    hm.insert(String::from("value"), Value::new(String::from("some_value")));
+    hm.insert(String::from("value"), Value::new(0));
 
     // convert hashmap to struct, and check attributes
-    let test: TestStruct = TestStruct::from_hashmap(hm);
+    let test: TestStruct = TestStruct::from_genericmap(hm);
     assert!(test.name == "example");
-    assert!(test.value == "some_value");
+    assert!(test.value == 0);
 }
 ```
 
 ### Struct to Map
 
 ```rust
-use structmap::ToHashMap;
-use structmap_derive::ToHashMap;
+use structmap::ToMap;
+use structmap_derive::ToMap;
 
 #[derive(ToHashMap)]
 struct TestStruct {
     name: String,
-    value: String,
+    value: i32,
 }
 
 // impl Default ...
@@ -99,11 +100,16 @@ struct TestStruct {
 fn main() {
     let test_struct = TestStruct {
         name: String::from("example"),
-        value: String::from("some_value"),
+        value: 0,
     };
 
-    // convert struct to hashmap, and check attributes
-    let hm: HashMap<String, Value> = TestStruct::to_hashmap(test_struct);
+    // convert struct to generic map, and check attributes
+    let hm: HashMap<String, Value> = TestStruct::to_genericmap(test_struct);
+    assert!(hm.get("name").unwrap().string().unwrap() == "example");
+    assert!(hm.get("value").unwrap().i32().unwrap() == 0);
+
+    // convert struct to string map, and check attributes
+    let hm: HashMap<String, Value> = TestStruct::to_stringmap(test_struct);
     assert!(hm.get("name").unwrap().to_string().unwrap() == "example");
     assert!(hm.get("value").unwrap().to_string().unwrap() == "some_value");
 }
@@ -133,7 +139,7 @@ following:
 * `String`s and `&str`s
 
 All other types, include dynamic arrays, `Option`s, `Result`s and complex structures are not yet
-supported (which you can help implement)
+supported (which you can help implement).
 
 ## Contributions
 
