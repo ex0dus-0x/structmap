@@ -3,7 +3,6 @@
 use structmap::{FromMap, ToMap};
 use structmap_derive::{FromMap, ToMap};
 
-
 #[derive(FromMap, ToMap)]
 struct TestStruct {
     name: String,

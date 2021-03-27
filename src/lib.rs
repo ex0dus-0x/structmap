@@ -39,7 +39,6 @@ where
 */
 
 pub trait FromMap: Default {
-
     /// Converts a `StringMap` back into a structure.
     /// __Constraints__: assumes that value types conform to the original types of the struct.
     fn from_stringmap(hashmap: StringMap) -> Self;
@@ -50,12 +49,13 @@ pub trait FromMap: Default {
 }
 
 pub trait ToMap: Default {
-
     /// Generates a `StringMap` where value types are all casted to strings.
     /// __Constraints__: one-way, will need additional work to re-convert to struct.
+    #[allow(clippy::wrong_self_convention)]
     fn to_stringmap(structure: Self) -> StringMap;
 
     /// Generates a `GenericMap` where value types are all encapsulated under a sum type.
     /// __Constraints__: currently only supports primitive types for genericized values.
+    #[allow(clippy::wrong_self_convention)]
     fn to_genericmap(structure: Self) -> GenericMap;
 }

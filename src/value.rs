@@ -42,7 +42,6 @@ impl Value {
         }
     }
 
-
     /// Helper called by procedural macro to parse out bool primitive type
     pub fn bool(&self) -> Option<bool> {
         if let Value::Bool(val) = self {
