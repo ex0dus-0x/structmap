@@ -9,10 +9,10 @@ homepage = "https://github.com/ex0dus-0x/structmap"
 documentation = "https://docs.rs/structmap"
 repository = "https://github.com/ex0dus-0x/structmap"
 
-version = "0.1.3"
+version = "0.1.4"
 edition = "2018"
 
 [dependencies]
-structmap-derive = { path = "structmap-derive", version = "0.1.3" }
+structmap-derive = { path = "structmap-derive", version = "0.1.4" }
 
 [workspace]
