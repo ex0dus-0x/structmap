@@ -21,8 +21,8 @@ struct SomeData {
     key: String
 }
 
-// ... and a HashMap like ...
-let somedata_hm = HashMap::new();
+// ... and a BTreeMap like ...
+let somedata_hm = BTreeMap::new();
 ```
 
 This removes the need to pattern match on attributes and keys when making a conversion.
@@ -43,7 +43,7 @@ Now let's demonstrate conversion! Note that your `struct` type should extend the
 
 __structmap__ supports conversion between two types of map aliases:
 
-1. `StringMap` - Strings for both keys and values. Conversion is supported only one-way at the moment from struct to HashMap.
+1. `StringMap` - Strings for both keys and values. Conversion is supported only one-way at the moment from struct to BTreeMap.
 2. `GenericMap` - Generic [serde](https://docs.serde.rs/serde_json/enum.Value.html)-style `Value`s as values. Conversion is supported both ways, but limited.
 
 ### Map to Struct
@@ -52,7 +52,7 @@ __structmap__ supports conversion between two types of map aliases:
 use structmap::FromMap;
 use structmap_derive::FromMap;
 
-#[derive(FromHashMap)]
+#[derive(FromBTreeMap)]
 struct TestStruct {
     name: String,
     value: i32,
@@ -89,7 +89,7 @@ fn main() {
 use structmap::ToMap;
 use structmap_derive::ToMap;
 
-#[derive(ToHashMap)]
+#[derive(ToBTreeMap)]
 struct TestStruct {
     name: String,
     value: i32,
@@ -104,12 +104,12 @@ fn main() {
     };
 
     // convert struct to generic map, and check attributes
-    let hm: HashMap<String, Value> = TestStruct::to_genericmap(test_struct);
+    let hm: BTreeMap<String, Value> = TestStruct::to_genericmap(test_struct);
     assert!(hm.get("name").unwrap().string().unwrap() == "example");
     assert!(hm.get("value").unwrap().i32().unwrap() == 0);
 
     // convert struct to string map, and check attributes
-    let hm: HashMap<String, Value> = TestStruct::to_stringmap(test_struct);
+    let hm: BTreeMap<String, Value> = TestStruct::to_stringmap(test_struct);
     assert!(hm.get("name").unwrap().to_string().unwrap() == "example");
     assert!(hm.get("value").unwrap().to_string().unwrap() == "some_value");
 }
@@ -119,7 +119,7 @@ Need a different key name when converting from a `struct` to a map container? Us
 struct attributes!
 
 ```rust
-#[derive(ToHashMap)]
+#[derive(ToBTreeMap)]
 struct TestStruct {
     #[rename(name = "Full Name")]
     name: String,
