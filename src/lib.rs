@@ -3,15 +3,15 @@
 
 pub mod value;
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use crate::value::Value;
 
-// Alias for HashMap with String keys and values
-pub type StringMap = HashMap<String, String>;
+// Alias for BTreeMap with String keys and values
+pub type StringMap = BTreeMap<String, String>;
 
-// Alias for HashMap with String keys and generic values
-pub type GenericMap = HashMap<String, Value>;
+// Alias for BTreeMap with String keys and generic values
+pub type GenericMap = BTreeMap<String, Value>;
 
 /*
 // Blanket trait abstraction over map containers in Rust
@@ -19,7 +19,7 @@ pub trait MapTrait<V> {
     fn map_get(&self, key: &String) -> Option<&V>;
 }
 
-impl<'a, V> MapTrait<V> for &'a HashMap<String, V>
+impl<'a, V> MapTrait<V> for &'a BTreeMap<String, V>
 where
     V: std::any::Any,
 {

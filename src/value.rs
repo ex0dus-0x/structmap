@@ -1,7 +1,7 @@
 use std::any::Any;
 use std::fmt;
 
-/// Represents primitive types that are supported for conversion into a HashMap that can support
+/// Represents primitive types that are supported for conversion into a BTreeMap that can support
 /// heterogeneous values. Inspired by `serde_json::Value`s.
 #[derive(Debug, Clone)]
 pub enum Value {

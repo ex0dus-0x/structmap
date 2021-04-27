@@ -10,9 +10,9 @@ use proc_macro2::Span;
 use quote::quote;
 use syn::{Data, DeriveInput, Fields, Ident, Type};
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
-/// Implements the functionality for converting entries in a HashMap into attributes and values of a
+/// Implements the functionality for converting entries in a BTreeMap into attributes and values of a
 /// struct. It will consume a tokenized version of the initial struct declaration, and use code
 /// generation to implement the `FromMap` trait for instantiating the contents of the struct.
 #[proc_macro_derive(FromMap)]
@@ -91,7 +91,7 @@ pub fn from_map(input: TokenStream) -> TokenStream {
                 let mut settings = #name::default();
                 #(
                     match hashmap.entry(String::from(#keys)) {
-                        ::std::collections::hash_map::Entry::Occupied(entry) => {
+                        ::std::collections::btree_map::Entry::Occupied(entry) => {
                             // parse out primitive value from generic type using typed call
                             let value = match entry.get().#typecalls() {
                                 Some(val) => val,
@@ -109,7 +109,7 @@ pub fn from_map(input: TokenStream) -> TokenStream {
     TokenStream::from(tokens)
 }
 
-/// Converts a given input struct into a HashMap where the keys are the attribute names assigned to
+/// Converts a given input struct into a BTreeMap where the keys are the attribute names assigned to
 /// the values of the entries.
 #[proc_macro_derive(ToMap, attributes(rename))]
 pub fn to_map(input_struct: TokenStream) -> TokenStream {
@@ -173,8 +173,8 @@ pub fn to_map(input_struct: TokenStream) -> TokenStream {
 /// Helper method used to parse out any `rename` attribute definitions in a struct
 /// marked with the ToMap trait, returning a mapping between the original field name
 /// and the one being changed for later use when doing codegen.
-fn parse_rename_attrs(fields: &Fields) -> HashMap<String, String> {
-    let mut rename: HashMap<String, String> = HashMap::new();
+fn parse_rename_attrs(fields: &Fields) -> BTreeMap<String, String> {
+    let mut rename: BTreeMap<String, String> = BTreeMap::new();
     match fields {
         Fields::Named(_) => {
             // iterate over fields available and attributes
