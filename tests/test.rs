@@ -6,7 +6,7 @@ use structmap_derive::{FromMap, ToMap};
 #[derive(FromMap, ToMap)]
 struct TestStruct {
     name: String,
-    value: i32,
+    value: i64,
 }
 
 impl Default for TestStruct {
@@ -35,11 +35,11 @@ fn test_stringmap_to_struct() {
 fn test_genericmap_to_struct() {
     let mut hm = GenericMap::new();
     hm.insert(String::from("name"), Value::new("example"));
-    hm.insert(String::from("value"), Value::new(0));
+    hm.insert(String::from("value"), Value::new(0i64));
 
     let test: TestStruct = TestStruct::from_genericmap(hm);
     assert!(test.name == "example");
-    assert!(test.value == 0);
+    assert!(test.value == 0i64);
 }
 
 #[test]
@@ -63,7 +63,7 @@ fn test_struct_to_genericmap() {
 
     let hm = TestStruct::to_genericmap(test_struct);
     assert!(hm.get("name").unwrap().string().unwrap() == "example");
-    assert!(hm.get("value").unwrap().i32().unwrap() == 0);
+    assert!(hm.get("value").unwrap().i64().unwrap() == 0);
 }
 
 #[derive(ToMap)]
