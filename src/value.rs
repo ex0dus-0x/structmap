@@ -7,11 +7,18 @@ use std::fmt;
 pub enum Value {
     Null,
     Bool(bool),
-    Int(i32),
-    UInt(u32),
+    Num(Num),
     String(String),
     Array(Vec<Value>),
     // TODO: Map
+}
+
+/// Represents the numeric primitive types that are supported for conversion.
+#[derive(Debug, Clone)]
+pub enum Num {
+    I64(i64),
+    U64(u64),
+    F64(f64),
 }
 
 impl fmt::Display for Value {
@@ -27,10 +34,12 @@ impl Value {
         let any_val = &value as &dyn Any;
         if let Some(val) = any_val.downcast_ref::<bool>() {
             Value::Bool(*val)
-        } else if let Some(val) = any_val.downcast_ref::<i32>() {
-            Value::Int(*val)
-        } else if let Some(val) = any_val.downcast_ref::<u32>() {
-            Value::UInt(*val)
+        } else if let Some(val) = any_val.downcast_ref::<i64>() {
+            Value::Num(Num::I64(*val))
+        } else if let Some(val) = any_val.downcast_ref::<u64>() {
+            Value::Num(Num::U64(*val))
+        } else if let Some(val) = any_val.downcast_ref::<f64>() {
+            Value::Num(Num::F64(*val))
         } else if let Some(val) = any_val.downcast_ref::<&'static str>() {
             Value::String(val.to_string())
         } else if let Some(val) = any_val.downcast_ref::<String>() {
@@ -42,7 +51,6 @@ impl Value {
         }
     }
 
-    /// Helper called by procedural macro to parse out bool primitive type
     pub fn bool(&self) -> Option<bool> {
         if let Value::Bool(val) = self {
             Some(*val)
@@ -51,25 +59,30 @@ impl Value {
         }
     }
 
-    /// Helper called by procedural macro to parse out i32 primitive type
-    pub fn i32(&self) -> Option<i32> {
-        if let Value::Int(val) = self {
+    pub fn i64(&self) -> Option<i64> {
+        if let Value::Num(Num::I64(val)) = self {
             Some(*val)
         } else {
             None
         }
     }
 
-    /// Helper called by procedural macro to parse out i32 primitive type
-    pub fn u32(&self) -> Option<u32> {
-        if let Value::UInt(val) = self {
+    pub fn u64(&self) -> Option<u64> {
+        if let Value::Num(Num::U64(val)) = self {
             Some(*val)
         } else {
             None
         }
     }
 
-    /// Helper called by procedural macro to parse out String type
+    pub fn f64(&self) -> Option<f64> {
+        if let Value::Num(Num::F64(val)) = self {
+            Some(*val)
+        } else {
+            None
+        }
+    }
+
     pub fn string(&self) -> Option<String> {
         if let Value::String(string) = self {
             Some(string.to_string())

@@ -43,7 +43,7 @@ Now let's demonstrate conversion! Note that your `struct` type should extend the
 
 __structmap__ supports conversion between two types of map aliases:
 
-1. `StringMap` - Strings for both keys and values. Conversion is supported only one-way at the moment from struct to BTreeMap.
+1. `StringMap` - Strings for both keys and values. Conversion is supported only one-way at the moment from struct to BTreeMap, but not the other way around.
 2. `GenericMap` - Generic [serde](https://docs.serde.rs/serde_json/enum.Value.html)-style `Value`s as values. Conversion is supported both ways, but limited.
 
 ### Map to Struct

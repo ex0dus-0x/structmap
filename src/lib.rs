@@ -13,36 +13,8 @@ pub type StringMap = BTreeMap<String, String>;
 // Alias for BTreeMap with String keys and generic values
 pub type GenericMap = BTreeMap<String, Value>;
 
-/*
-// Blanket trait abstraction over map containers in Rust
-pub trait MapTrait<V> {
-    fn map_get(&self, key: &String) -> Option<&V>;
-}
-
-impl<'a, V> MapTrait<V> for &'a BTreeMap<String, V>
-where
-    V: std::any::Any,
-{
-    fn map_get(&self, key: &String) -> Option<&V> {
-        self.get(key)
-    }
-}
-
-impl<'a, V> MapTrait<V> for &'a BTreeMap<String, V>
-where
-    V: std::any::Any,
-{
-    fn map_get(&self, key: &String) -> Option<&V> {
-        self.get(key)
-    }
-}
-*/
 
 pub trait FromMap: Default {
-    /// Converts a `StringMap` back into a structure.
-    /// __Constraints__: assumes that value types conform to the original types of the struct.
-    fn from_stringmap(hashmap: StringMap) -> Self;
-
     /// Converts a `GenericMap` back into a structure.
     /// __Constraints__: assumes that value types conform to the original types of the struct.
     fn from_genericmap(hashmap: GenericMap) -> Self;

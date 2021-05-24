@@ -48,8 +48,6 @@ pub fn from_map(input: TokenStream) -> TokenStream {
                 // get the type of the specified field, lowercase
                 let typename: String = quote! {#typepath}.to_string().to_lowercase();
 
-                // TODO: exit on unsupported types
-
                 // initialize new Ident for codegen
                 Ident::new(&typename, Span::mixed_site())
             }
@@ -68,9 +66,9 @@ pub fn from_map(input: TokenStream) -> TokenStream {
 
         impl #impl_generics FromMap for #name #ty_generics #where_clause {
 
+            /* FIXME
             fn from_stringmap(mut hashmap: StringMap) -> #name {
                 let mut settings = #name::default();
-                /* TODO
                 #(
                     match hashmap.entry(String::from(#keys)) {
                         ::std::collections::hash_map::Entry::Occupied(entry) => {
@@ -83,9 +81,9 @@ pub fn from_map(input: TokenStream) -> TokenStream {
                         _ => unreachable!()
                     }
                 )*
-                */
                 settings
             }
+            */
 
             fn from_genericmap(mut hashmap: GenericMap) -> #name {
                 let mut settings = #name::default();
@@ -95,11 +93,11 @@ pub fn from_map(input: TokenStream) -> TokenStream {
                             // parse out primitive value from generic type using typed call
                             let value = match entry.get().#typecalls() {
                                 Some(val) => val,
-                                None => unreachable!()
+                                None => panic!("Cannot parse out map entry")
                             };
                             settings.#idents = value;
                         },
-                        _ => unreachable!()
+                        _ => panic!("Cannot parse out map entry"),
                     }
                 )*
                 settings
