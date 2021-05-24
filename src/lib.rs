@@ -13,7 +13,6 @@ pub type StringMap = BTreeMap<String, String>;
 // Alias for BTreeMap with String keys and generic values
 pub type GenericMap = BTreeMap<String, Value>;
 
-
 pub trait FromMap: Default {
     /// Converts a `GenericMap` back into a structure.
     /// __Constraints__: assumes that value types conform to the original types of the struct.
