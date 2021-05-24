@@ -129,22 +129,12 @@ struct TestStruct {
 }
 ```
 
-## Limitations
-
-At the current moment, `Value` only supports encapsulate basic primitive types, which includes the
-following:
-
-* `i32` and `u32` numerals
-* `bool`s
-* `String`s and `&str`s
-
-All other types, include dynamic arrays, `Option`s, `Result`s and complex structures are not yet
-supported (which you can help implement).
-
 ## Contributions
 
-This is still a WIP crate, and will mostly be used for personal projects, but feel free to let me
-know if there are any outstanding features that should be implemented!
+All complex types, include dynamic arrays, `Option`s, `Result`s and data structures are not yet
+supported (which you can help implement!).
+
+Feel free to let me know if there are any outstanding features that should be implemented!
 
 ## License
 
