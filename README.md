@@ -16,13 +16,14 @@
 Procedural macro crate for converting between Rust `struct` types and associative containers.
 
 ```rust
+use std::collections::BTreeMap;
 // converting between a struct like ...
 struct SomeData {
     key: String
 }
 
 // ... and a BTreeMap like ...
-let somedata_hm = BTreeMap::new();
+let somedata_hm: BTreeMap<String, String> = BTreeMap::new();
 ```
 
 This removes the need to pattern match on attributes and keys when making a conversion.
@@ -34,7 +35,7 @@ but extends on it much further to support conversion both ways, generic value ty
 
 In your `Cargo.toml` file, include the crate as so:
 
-```
+```toml
 [dependencies]
 structmap = "0.1"
 ```
@@ -52,16 +53,16 @@ __structmap__ supports conversion between two types of map aliases:
 use structmap::FromMap;
 use structmap_derive::FromMap;
 
-#[derive(FromBTreeMap)]
+#[derive(FromMap)]
 struct TestStruct {
     name: String,
-    value: i32,
+    value: i64,
 }
 
 impl Default for TestStruct {
     fn default() -> Self {
         Self {
-            name: String::new()
+            name: String::new(),
             value: 0
         }
     }
@@ -74,7 +75,7 @@ fn main() {
     // `Value` is an enum wrapper to support genericized types, to support structs
     // with varying types for their fields.
     hm.insert(String::from("name"), Value::new(String::from("example")));
-    hm.insert(String::from("value"), Value::new(0));
+    hm.insert(String::from("value"), Value::new(0_i64));
 
     // convert hashmap to struct, and check attributes
     let test: TestStruct = TestStruct::from_genericmap(hm);
@@ -86,13 +87,14 @@ fn main() {
 ### Struct to Map
 
 ```rust
-use structmap::ToMap;
+use structmap::{ToMap, value::Value};
 use structmap_derive::ToMap;
+use std::collections::BTreeMap;
 
-#[derive(ToBTreeMap)]
+#[derive(ToMap, Default)]
 struct TestStruct {
     name: String,
-    value: i32,
+    value: i64,
 }
 
 // impl Default ...
@@ -106,12 +108,17 @@ fn main() {
     // convert struct to generic map, and check attributes
     let hm: BTreeMap<String, Value> = TestStruct::to_genericmap(test_struct);
     assert!(hm.get("name").unwrap().string().unwrap() == "example");
-    assert!(hm.get("value").unwrap().i32().unwrap() == 0);
+    assert!(hm.get("value").unwrap().i64().unwrap() == 0);
+
+    let test_struct = TestStruct {
+        name: String::from("example"),
+        value: 0,
+    };
 
     // convert struct to string map, and check attributes
-    let hm: BTreeMap<String, Value> = TestStruct::to_stringmap(test_struct);
-    assert!(hm.get("name").unwrap().to_string().unwrap() == "example");
-    assert!(hm.get("value").unwrap().to_string().unwrap() == "some_value");
+    let hm: BTreeMap<String, String> = TestStruct::to_stringmap(test_struct);
+    assert!(hm.get("name").unwrap() == "example");
+    assert!(hm.get("value").unwrap() == "0");
 }
 ```
 
@@ -119,7 +126,10 @@ Need a different key name when converting from a `struct` to a map container? Us
 struct attributes!
 
 ```rust
-#[derive(ToBTreeMap)]
+use structmap::ToMap;
+use structmap_derive::ToMap;
+
+#[derive(ToMap, Default)]
 struct TestStruct {
     #[rename(name = "Full Name")]
     name: String,

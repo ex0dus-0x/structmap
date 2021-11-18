@@ -1,6 +1,7 @@
 //! Implements the public traits that developers inherit from in order to properly utilize the
 //! derive macro's functionality in code conversion and generation.
-
+#![doc = include_str!("../README.md")]
+//!
 pub mod value;
 
 use std::collections::BTreeMap;
