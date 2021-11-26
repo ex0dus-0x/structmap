@@ -148,18 +148,18 @@ pub fn to_map(input_struct: TokenStream) -> TokenStream {
 
         impl #impl_generics ToMap for #name #ty_generics #where_clause {
 
-            fn to_stringmap(mut input_struct: #name) -> StringMap {
-                let mut map = StringMap::new();
+            fn to_stringmap(mut input_struct: #name) -> structmap::StringMap {
+                let mut map = structmap::StringMap::new();
                 #(
                     map.insert(#keys.to_string(), input_struct.#idents.to_string());
                 )*
                 map
             }
 
-            fn to_genericmap(mut input_struct: #name) -> GenericMap {
-                let mut map = GenericMap::new();
+            fn to_genericmap(mut input_struct: #name) -> structmap::GenericMap {
+                let mut map = structmap::GenericMap::new();
                 #(
-                    map.insert(#keys.to_string(), Value::new(input_struct.#idents));
+                    map.insert(#keys.to_string(), structmap::value::Value::new(input_struct.#idents));
                 )*
                 map
             }
