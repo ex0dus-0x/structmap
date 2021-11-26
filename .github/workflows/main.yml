@@ -36,7 +36,7 @@ jobs:
           args: -- -D warnings
 
   build:
-    name: Build
+    name: Build & Test
     runs-on: ubuntu-latest
     steps:
 
@@ -53,3 +53,9 @@ jobs:
         with:
           command: build
           args: --release --all-features
+
+      - name: Test package
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --release
