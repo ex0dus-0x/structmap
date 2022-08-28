@@ -18,7 +18,6 @@ impl Default for TestStruct {
     }
 }
 
-/*
 #[test]
 fn test_stringmap_to_struct() {
     let mut hm = StringMap::new();
@@ -29,7 +28,7 @@ fn test_stringmap_to_struct() {
     assert!(test.name == "example");
     assert!(test.value == 0);
 }
-*/
+
 
 #[test]
 fn test_genericmap_to_struct() {
@@ -62,7 +61,7 @@ fn test_struct_to_genericmap() {
     };
 
     let hm = TestStruct::to_genericmap(test_struct);
-    assert!(hm.get("name").unwrap().string().unwrap() == "example");
+    assert!(hm.get("name").unwrap().String().unwrap() == "example");
     assert!(hm.get("value").unwrap().i64().unwrap() == 0);
 }
 

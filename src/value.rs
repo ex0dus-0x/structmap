@@ -83,7 +83,8 @@ impl Value {
         }
     }
 
-    pub fn string(&self) -> Option<String> {
+    #[allow(non_snake_case)]
+    pub fn String(&self) -> Option<String> {
         if let Value::String(string) = self {
             Some(string.to_string())
         } else {
