@@ -107,7 +107,7 @@ fn main() {
 
     // convert struct to generic map, and check attributes
     let hm: BTreeMap<String, Value> = TestStruct::to_genericmap(test_struct);
-    assert!(hm.get("name").unwrap().string().unwrap() == "example");
+    assert!(hm.get("name").unwrap().String().unwrap() == "example");
     assert!(hm.get("value").unwrap().i64().unwrap() == 0);
 
     let test_struct = TestStruct {
