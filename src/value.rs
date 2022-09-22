@@ -18,6 +18,7 @@ pub enum Value {
 pub enum Num {
     I64(i64),
     U64(u64),
+    U128(u128),
     F64(f64),
 }
 
@@ -38,6 +39,8 @@ impl Value {
             Value::Num(Num::I64(*val))
         } else if let Some(val) = any_val.downcast_ref::<u64>() {
             Value::Num(Num::U64(*val))
+        } else if let Some(val) = any_val.downcast_ref::<u128>() {
+            Value::Num(Num::U128(*val))
         } else if let Some(val) = any_val.downcast_ref::<f64>() {
             Value::Num(Num::F64(*val))
         } else if let Some(val) = any_val.downcast_ref::<&'static str>() {
@@ -69,6 +72,14 @@ impl Value {
 
     pub fn u64(&self) -> Option<u64> {
         if let Value::Num(Num::U64(val)) = self {
+            Some(*val)
+        } else {
+            None
+        }
+    }
+
+    pub fn u128(&self) -> Option<u128> {
+        if let Value::Num(Num::U128(val)) = self {
             Some(*val)
         } else {
             None
