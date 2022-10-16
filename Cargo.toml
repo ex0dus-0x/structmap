@@ -1,5 +1,5 @@
 [package]
-name = "structmap"
+name = "struct2map"
 description = "Procedural macro library for converting between Rust structs and associative containers"
 
 authors = ["ex0dus-0x <ex0dus@codemuch.tech>"]

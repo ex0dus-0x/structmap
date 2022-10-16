@@ -1,5 +1,5 @@
 [package]
-name = "structmap-derive"
+name = "struct2map-derive"
 description = "Proc derive macro for structmap crate"
 
 authors = ["ex0dus-0x <ex0dus@codemuch.tech>"]
