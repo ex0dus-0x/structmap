@@ -146,6 +146,11 @@ supported (which you can help implement!).
 
 Feel free to let me know if there are any outstanding features that should be implemented!
 
+Big thanks to the following contributors:
+
+* [@jose-acevedoflores](https://github.com/jose-acevedoflores)
+* [@pedrosoares](https://github.com/pedrosoares)
+
 ## License
 
 [MIT License](https://codemuch.tech/license.txt)

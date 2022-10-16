@@ -29,7 +29,6 @@ fn test_stringmap_to_struct() {
     assert!(test.value == 0);
 }
 
-
 #[test]
 fn test_genericmap_to_struct() {
     let mut hm = GenericMap::new();

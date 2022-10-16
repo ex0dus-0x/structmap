@@ -12,6 +12,8 @@ use syn::{Data, DeriveInput, Fields, Ident, Type};
 
 use std::collections::BTreeMap;
 
+const RENAME_ERROR_MSG: &str = "Must be `#[rename(name = 'VALUE')]`";
+
 /// Implements the functionality for converting entries in a BTreeMap into attributes and values of a
 /// struct. It will consume a tokenized version of the initial struct declaration, and use code
 /// generation to implement the `FromMap` trait for instantiating the contents of the struct.
@@ -171,52 +173,53 @@ pub fn to_map(input_struct: TokenStream) -> TokenStream {
 /// and the one being changed for later use when doing codegen.
 fn parse_rename_attrs(fields: &Fields) -> BTreeMap<String, String> {
     let mut rename: BTreeMap<String, String> = BTreeMap::new();
-    match fields {
-        Fields::Named(_) => {
-            // iterate over fields available and attributes
-            for field in fields.iter() {
-                for attr in field.attrs.iter() {
-                    // parse original struct field name
-                    let field_name = field.ident.as_ref().unwrap().to_string();
-                    if rename.contains_key(&field_name) {
-                        panic!("Cannot redefine field name multiple times");
-                    }
 
-                    // parse out name value pairs in attributes
-                    // first get `lst` in #[rename(lst)]
-                    match attr.parse_meta() {
-                        Ok(syn::Meta::List(lst)) => {
-                            // then parse key-value name
-                            match lst.nested.first() {
-                                Some(syn::NestedMeta::Meta(syn::Meta::NameValue(nm))) => {
-                                    // check path to be = `name`
-                                    let path = nm.path.get_ident().unwrap().to_string();
-                                    if path != "name" {
-                                        panic!("Must be `#[rename(name = 'VALUE')]`");
-                                    }
+    // != for if let not yet introduced
+    if let Fields::Named(_) = fields {
+        // no-op
+    } else {
+        panic!("Must have named fields.");
+    }
 
-                                    let lit = match &nm.lit {
-                                        syn::Lit::Str(val) => val.value(),
-                                        _ => {
-                                            panic!("Must be `#[rename(name = 'VALUE')]`");
-                                        }
-                                    };
-                                    rename.insert(field_name, lit);
-                                }
-                                _ => {
-                                    panic!("Must be `#[rename(name = 'VALUE')]`");
-                                }
+    // iterate over fields available and attributes
+    for field in fields.iter() {
+        for attr in field.attrs.iter() {
+            // parse original struct field name
+            let field_name = field.ident.as_ref().unwrap().to_string();
+            if rename.contains_key(&field_name) {
+                panic!("Cannot redefine field name multiple times.");
+            }
+
+            // parse out name value pairs in attributes
+            // first get `lst` in #[rename(lst)]
+            match attr.parse_meta() {
+                Ok(syn::Meta::List(lst)) => {
+                    // then parse key-value name
+                    match lst.nested.first() {
+                        Some(syn::NestedMeta::Meta(syn::Meta::NameValue(nm))) => {
+                            // check path to be = `name`
+                            let path = nm.path.get_ident().unwrap().to_string();
+                            if path != "name" {
+                                panic!("{}", RENAME_ERROR_MSG);
                             }
+
+                            let lit = match &nm.lit {
+                                syn::Lit::Str(val) => val.value(),
+                                _ => {
+                                    panic!("{}", RENAME_ERROR_MSG);
+                                }
+                            };
+                            rename.insert(field_name, lit);
                         }
                         _ => {
-                            panic!("Must be `#[rename(name = 'VALUE')]`");
+                            panic!("{}", RENAME_ERROR_MSG);
                         }
                     }
                 }
+                _ => {
+                    panic!("{}", RENAME_ERROR_MSG);
+                }
             }
-        }
-        _ => {
-            panic!("Must have named fields");
         }
     }
     rename
