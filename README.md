@@ -38,6 +38,7 @@ In your `Cargo.toml` file, include the crate as so:
 ```toml
 [dependencies]
 structmap = "0.1"
+structmap-derive = "0.1"
 ```
 
 Now let's demonstrate conversion! Note that your `struct` type should extend the `Default` trait for type conversion to account for uninitialized attributes.
