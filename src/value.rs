@@ -1,5 +1,4 @@
 use std::any::Any;
-use std::fmt;
 
 /// Represents primitive types that are supported for conversion into a BTreeMap that can support
 /// heterogeneous values. Inspired by `serde_json::Value`s.
@@ -19,12 +18,6 @@ pub enum Num {
     I64(i64),
     U64(u64),
     F64(f64),
-}
-
-impl fmt::Display for Value {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self)
-    }
 }
 
 impl Value {
