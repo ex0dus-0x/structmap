@@ -46,7 +46,7 @@ pub fn from_map(input: TokenStream) -> TokenStream {
                 // TODO: genericized numerics
 
                 // get the type of the specified field, lowercase
-                let typename: String = quote! {#typepath}.to_string().to_lowercase();
+                let typename: String = quote! {#typepath}.to_string();
 
                 // initialize new Ident for codegen
                 Ident::new(&typename, Span::mixed_site())
@@ -66,24 +66,22 @@ pub fn from_map(input: TokenStream) -> TokenStream {
 
         impl #impl_generics FromMap for #name #ty_generics #where_clause {
 
-            /* FIXME
             fn from_stringmap(mut hashmap: StringMap) -> #name {
                 let mut settings = #name::default();
                 #(
                     match hashmap.entry(String::from(#keys)) {
-                        ::std::collections::hash_map::Entry::Occupied(entry) => {
-                            let value = match entry.get() {
-                                Some(val) => val.parse::<#typecalls>().unwrap(),
-                                None => unreachable!()
+                        ::std::collections::btree_map::Entry::Occupied(entry) => {
+                            let value = match entry.get().parse::<#typecalls>() {
+                                Ok(val) => val,
+                                _ => panic!("Cannot parse out map entry")
                             };
                             settings.#idents = value;
                         },
-                        _ => unreachable!()
+                        _ => ()
                     }
                 )*
                 settings
             }
-            */
 
             fn from_genericmap(mut hashmap: GenericMap) -> #name {
                 let mut settings = #name::default();
@@ -97,7 +95,7 @@ pub fn from_map(input: TokenStream) -> TokenStream {
                             };
                             settings.#idents = value;
                         },
-                        _ => panic!("Cannot parse out map entry"),
+                        _ => (),
                     }
                 )*
                 settings

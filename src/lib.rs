@@ -17,6 +17,7 @@ pub type GenericMap = BTreeMap<String, Value>;
 pub trait FromMap: Default {
     /// Converts a `GenericMap` back into a structure.
     /// __Constraints__: assumes that value types conform to the original types of the struct.
+    fn from_stringmap(hashmap: StringMap) -> Self;
     fn from_genericmap(hashmap: GenericMap) -> Self;
 }
 
